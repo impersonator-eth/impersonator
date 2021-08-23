@@ -191,6 +191,7 @@ function Body() {
         <Input
           placeholder="wc:xyz123"
           aria-label="uri"
+          autoComplete="off"
           value={uri}
           onChange={(e) => setUri(e.target.value)}
           bg={bgColor[colorMode]}
