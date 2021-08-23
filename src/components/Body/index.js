@@ -34,17 +34,19 @@ function Body() {
     if (session) {
       let _connector = new WalletConnect({ session });
 
-      setConnector(_connector);
-      setAddress(_connector.accounts[0]);
-      setUri(_connector.uri);
-      setPeerMeta(_connector.peerMeta);
-      setIsConnected(true);
+      if (_connector.peerMeta) {
+        setConnector(_connector);
+        setAddress(_connector.accounts[0]);
+        setUri(_connector.uri);
+        setPeerMeta(_connector.peerMeta);
+        setIsConnected(true);
 
-      const chainId = _connector.chainId.chainID;
-      for (let i = 0; i < networkInfo.length; i++) {
-        if (networkInfo[i].chainID == chainId) {
-          setChainIdIndex(i);
-          break;
+        const chainId = _connector.chainId.chainID;
+        for (let i = 0; i < networkInfo.length; i++) {
+          if (networkInfo[i].chainID == chainId) {
+            setChainIdIndex(i);
+            break;
+          }
         }
       }
     }
