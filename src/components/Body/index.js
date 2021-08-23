@@ -11,8 +11,10 @@ import {
   Text,
   Link,
   VStack,
-  Spacer,
   Select,
+  useToast,
+  CircularProgress,
+  Center,
 } from "@chakra-ui/react";
 import WalletConnect from "@walletconnect/client";
 import networkInfo from "./networkInfo";
@@ -20,6 +22,7 @@ import networkInfo from "./networkInfo";
 function Body() {
   const { colorMode } = useColorMode();
   const bgColor = { light: "white", dark: "gray.700" };
+  const toast = useToast();
 
   const [address, setAddress] = useState("");
   const [uri, setUri] = useState("");
@@ -27,6 +30,7 @@ function Body() {
   const [connector, setConnector] = useState();
   const [peerMeta, setPeerMeta] = useState();
   const [isConnected, setIsConnected] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const session = getCachedSession();
@@ -35,18 +39,23 @@ function Body() {
       let _connector = new WalletConnect({ session });
 
       if (_connector.peerMeta) {
-        setConnector(_connector);
-        setAddress(_connector.accounts[0]);
-        setUri(_connector.uri);
-        setPeerMeta(_connector.peerMeta);
-        setIsConnected(true);
+        try {
+          setConnector(_connector);
+          setAddress(_connector.accounts[0]);
+          setUri(_connector.uri);
+          setPeerMeta(_connector.peerMeta);
+          setIsConnected(true);
 
-        const chainId = _connector.chainId.chainID;
-        for (let i = 0; i < networkInfo.length; i++) {
-          if (networkInfo[i].chainID == chainId) {
-            setChainIdIndex(i);
-            break;
+          const chainId = _connector.chainId.chainID;
+          for (let i = 0; i < networkInfo.length; i++) {
+            if (networkInfo[i].chainID === chainId) {
+              setChainIdIndex(i);
+              break;
+            }
           }
+        } catch {
+          console.log("Corrupt old session. Starting fresh");
+          localStorage.removeItem("walletconnect");
         }
       }
     }
@@ -73,6 +82,7 @@ function Body() {
   };
 
   const initWalletConnect = async () => {
+    setLoading(true);
     try {
       let _connector = new WalletConnect({ uri });
 
@@ -83,7 +93,15 @@ function Body() {
       setConnector(_connector);
       setUri(_connector.uri);
     } catch (err) {
-      throw err;
+      console.error(err);
+      toast({
+        title: "Couldn't Connect",
+        description: "Refresh DApp and Connect again",
+        status: "error",
+        isClosable: true,
+        duration: 2000,
+      });
+      setLoading(false);
     }
   };
 
@@ -92,6 +110,9 @@ function Body() {
 
     if (connector) {
       connector.on("session_request", (error, payload) => {
+        if (loading) {
+          setLoading(false);
+        }
         console.log("EVENT", "session_request");
 
         if (error) {
@@ -138,7 +159,7 @@ function Body() {
           throw error;
         }
 
-        // this.resetApp();
+        reset();
       });
     }
   };
@@ -165,12 +186,19 @@ function Body() {
 
   const killSession = () => {
     console.log("ACTION", "killSession");
+
     if (connector) {
       connector.killSession();
 
       setPeerMeta(null);
       setIsConnected(false);
     }
+  };
+
+  const reset = () => {
+    setPeerMeta(null);
+    setIsConnected(false);
+    localStorage.removeItem("walletconnect");
   };
 
   return (
@@ -180,6 +208,7 @@ function Body() {
         <Input
           placeholder="Address"
           aria-label="address"
+          autoComplete="off"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           bg={bgColor[colorMode]}
@@ -206,8 +235,13 @@ function Body() {
         value={chainIdIndex}
         onChange={(e) => {
           setChainIdIndex(e.target.value);
+          if (connector && connector.connected) {
+            connector.updateSession({
+              chainId: networkInfo[e.target.value].chainID,
+              accounts: [address],
+            });
+          }
         }}
-        isDisabled={isConnected}
       >
         {networkInfo.map((network, i) => (
           <option value={i} key={i}>
@@ -218,6 +252,25 @@ function Body() {
       <Button onClick={initWalletConnect} isDisabled={isConnected}>
         Connect
       </Button>
+      {loading && (
+        <Center>
+          <VStack>
+            <Box>
+              <CircularProgress isIndeterminate />
+            </Box>
+            <Box pt={6}>
+              <Button
+                onClick={() => {
+                  setLoading(false);
+                  reset();
+                }}
+              >
+                Stop Loading ☠
+              </Button>
+            </Box>
+          </VStack>
+        </Center>
+      )}
       {peerMeta && (
         <>
           <Box mt={4} fontSize={24} fontWeight="semibold">
