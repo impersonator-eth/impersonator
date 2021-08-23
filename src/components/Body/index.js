@@ -46,6 +46,7 @@ function Body() {
       if (_connector.peerMeta) {
         try {
           setConnector(_connector);
+          setShowAddress(_connector.accounts[0]);
           setAddress(_connector.accounts[0]);
           setUri(_connector.uri);
           setPeerMeta(_connector.peerMeta);
