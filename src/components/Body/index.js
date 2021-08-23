@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import {
   Container,
+  InputGroup,
   Input,
+  InputRightElement,
   FormControl,
   useColorMode,
   FormLabel,
@@ -17,6 +19,7 @@ import {
   Center,
 } from "@chakra-ui/react";
 import WalletConnect from "@walletconnect/client";
+import { ethers } from "ethers";
 import networkInfo from "./networkInfo";
 
 function Body() {
@@ -24,9 +27,12 @@ function Body() {
   const bgColor = { light: "white", dark: "gray.700" };
   const toast = useToast();
 
-  const [address, setAddress] = useState("");
+  const [provider, setProvider] = useState();
+  const [showAddress, setShowAddress] = useState(""); // gets displayed in input. ENS name remains as it is
+  const [address, setAddress] = useState(""); // internal resolved address
+  const [isAddressValid, setIsAddressValid] = useState(true);
   const [uri, setUri] = useState("");
-  const [chainIdIndex, setChainIdIndex] = useState(0);
+  const [networkIndex, setNetworkIndex] = useState(0);
   const [connector, setConnector] = useState();
   const [peerMeta, setPeerMeta] = useState();
   const [isConnected, setIsConnected] = useState(false);
@@ -34,7 +40,6 @@ function Body() {
 
   useEffect(() => {
     const session = getCachedSession();
-
     if (session) {
       let _connector = new WalletConnect({ session });
 
@@ -48,8 +53,8 @@ function Body() {
 
           const chainId = _connector.chainId.chainID;
           for (let i = 0; i < networkInfo.length; i++) {
-            if (networkInfo[i].chainID === chainId) {
-              setChainIdIndex(i);
+            if (getChainId(i) === chainId) {
+              setNetworkIndex(i);
               break;
             }
           }
@@ -59,6 +64,10 @@ function Body() {
         }
       }
     }
+
+    setProvider(
+      new ethers.providers.JsonRpcProvider(process.env.REACT_APP_PROVIDER_URL)
+    );
   }, []);
 
   useEffect(() => {
@@ -66,6 +75,43 @@ function Body() {
       subscribeToEvents();
     }
   }, [connector]);
+
+  const resolveAndValidateAddress = async () => {
+    let isValid;
+    let _address = address;
+    if (!address) {
+      isValid = false;
+    } else {
+      // Resolve ENS
+      const resolvedAddress = await provider.resolveName(address);
+      if (resolvedAddress) {
+        setAddress(resolvedAddress);
+        _address = resolvedAddress;
+        isValid = true;
+      } else if (ethers.utils.isAddress(address)) {
+        isValid = true;
+      } else {
+        isValid = false;
+      }
+    }
+
+    setIsAddressValid(isValid);
+    if (!isValid) {
+      toast({
+        title: "Invalid Address",
+        description: "Address is not an ENS or Ethereum address",
+        status: "error",
+        isClosable: true,
+        duration: 4000,
+      });
+    }
+
+    return { isValid, _address: _address };
+  };
+
+  const getChainId = (networkIndex) => {
+    return networkInfo[networkIndex].chainID;
+  };
 
   const getCachedSession = () => {
     const local = localStorage ? localStorage.getItem("walletconnect") : null;
@@ -83,24 +129,30 @@ function Body() {
 
   const initWalletConnect = async () => {
     setLoading(true);
-    try {
-      let _connector = new WalletConnect({ uri });
+    const { isValid } = await resolveAndValidateAddress();
 
-      if (!_connector.connected) {
-        await _connector.createSession();
+    if (isValid) {
+      try {
+        let _connector = new WalletConnect({ uri });
+
+        if (!_connector.connected) {
+          await _connector.createSession();
+        }
+
+        setConnector(_connector);
+        setUri(_connector.uri);
+      } catch (err) {
+        console.error(err);
+        toast({
+          title: "Couldn't Connect",
+          description: "Refresh DApp and Connect again",
+          status: "error",
+          isClosable: true,
+          duration: 2000,
+        });
+        setLoading(false);
       }
-
-      setConnector(_connector);
-      setUri(_connector.uri);
-    } catch (err) {
-      console.error(err);
-      toast({
-        title: "Couldn't Connect",
-        description: "Refresh DApp and Connect again",
-        status: "error",
-        isClosable: true,
-        duration: 2000,
-      });
+    } else {
       setLoading(false);
     }
   };
@@ -125,6 +177,7 @@ function Body() {
 
       connector.on("session_update", (error) => {
         console.log("EVENT", "session_update");
+        setLoading(false);
 
         if (error) {
           throw error;
@@ -167,7 +220,7 @@ function Body() {
   const approveSession = () => {
     console.log("ACTION", "approveSession");
     if (connector) {
-      let chainId = networkInfo[chainIdIndex].chainID;
+      let chainId = getChainId(networkIndex);
       if (!chainId) {
         chainId = 1; // default to ETH Mainnet if no network selected
       }
@@ -181,6 +234,29 @@ function Body() {
     if (connector) {
       connector.rejectSession();
       setPeerMeta(null);
+    }
+  };
+
+  const updateSession = ({ newChainId, newAddress }) => {
+    let _chainId = newChainId || getChainId(networkIndex);
+    let _address = newAddress || address;
+
+    if (connector && connector.connected) {
+      connector.updateSession({
+        chainId: _chainId,
+        accounts: [_address],
+      });
+    } else {
+      setLoading(false);
+    }
+  };
+
+  const updateAddress = async () => {
+    setLoading(true);
+    const { isValid, _address } = await resolveAndValidateAddress();
+
+    if (isValid) {
+      updateSession({ newAddress: _address });
     }
   };
 
@@ -204,16 +280,30 @@ function Body() {
   return (
     <Container my="16" minW={["0", "0", "2xl", "2xl"]}>
       <FormControl>
-        <FormLabel>Enter Address to Impersonate</FormLabel>
-        <Input
-          placeholder="Address"
-          aria-label="address"
-          autoComplete="off"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          bg={bgColor[colorMode]}
-          isDisabled={isConnected}
-        />
+        <FormLabel>Enter Address or ENS to Impersonate</FormLabel>
+        <InputGroup>
+          <Input
+            placeholder="Address"
+            aria-label="address"
+            autoComplete="off"
+            value={showAddress}
+            onChange={(e) => {
+              const _showAddress = e.target.value;
+              setShowAddress(_showAddress);
+              setAddress(_showAddress);
+              setIsAddressValid(true); // remove inValid warning when user types again
+            }}
+            bg={bgColor[colorMode]}
+            isInvalid={!isAddressValid}
+          />
+          {isConnected && (
+            <InputRightElement width="4.5rem" mr="1rem">
+              <Button h="1.75rem" size="sm" onClick={updateAddress}>
+                Update
+              </Button>
+            </InputRightElement>
+          )}
+        </InputGroup>
       </FormControl>
       <FormControl my={4}>
         <FormLabel>WalletConnect URI</FormLabel>
@@ -232,15 +322,11 @@ function Body() {
         placeholder="Select Network"
         variant="filled"
         _hover={{ cursor: "pointer" }}
-        value={chainIdIndex}
+        value={networkIndex}
         onChange={(e) => {
-          setChainIdIndex(e.target.value);
-          if (connector && connector.connected) {
-            connector.updateSession({
-              chainId: networkInfo[e.target.value].chainID,
-              accounts: [address],
-            });
-          }
+          const _networkIndex = e.target.value;
+          setNetworkIndex(_networkIndex);
+          updateSession({ newChainId: getChainId(_networkIndex) });
         }}
       >
         {networkInfo.map((network, i) => (
@@ -258,16 +344,18 @@ function Body() {
             <Box>
               <CircularProgress isIndeterminate />
             </Box>
-            <Box pt={6}>
-              <Button
-                onClick={() => {
-                  setLoading(false);
-                  reset();
-                }}
-              >
-                Stop Loading ☠
-              </Button>
-            </Box>
+            {!isConnected && (
+              <Box pt={6}>
+                <Button
+                  onClick={() => {
+                    setLoading(false);
+                    reset();
+                  }}
+                >
+                  Stop Loading ☠
+                </Button>
+              </Box>
+            )}
           </VStack>
         </Center>
       )}
