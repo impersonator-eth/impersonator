@@ -6,7 +6,7 @@
 
 ## Website:
 
-**[https://apoorvlathey.com/impersonator/](https://apoorvlathey.com/impersonator/)**
+**[https://www.impersonator.xyz/](https://www.impersonator.xyz/)**
 
 ## Screenshots:
 

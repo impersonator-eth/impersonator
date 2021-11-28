@@ -75,6 +75,7 @@ function Body() {
     if (connector) {
       subscribeToEvents();
     }
+    // eslint-disable-next-line
   }, [connector]);
 
   const resolveAndValidateAddress = async () => {
