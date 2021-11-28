@@ -11,6 +11,7 @@ import {
   Box,
   Text,
   HStack,
+  Stack,
 } from "@chakra-ui/react";
 import { SunIcon, MoonIcon, ExternalLinkIcon } from "@chakra-ui/icons";
 
@@ -22,16 +23,20 @@ function Navbar() {
     <>
       <Alert status="warning" variant="solid">
         <AlertIcon />
-        <Box>
-          The latest build of Impersonator is available on it's own domain!
-          Check out:{" "}
-        </Box>
-        <Link href="http://impersonator.xyz/">
-          <HStack pl="0.3rem" fontWeight="bold" textDecor="underline">
-            <Text>Impersonator.xyz</Text>
-            <ExternalLinkIcon />
+        <Stack direction={{ base: "column", md: "row" }}>
+          <Box>
+            The latest build of Impersonator is available on it's own domain!
+          </Box>
+          <HStack>
+            <Text>Check out:</Text>
+            <Link href="http://impersonator.xyz/">
+              <HStack fontWeight="bold" textDecor="underline">
+                <Text>Impersonator.xyz</Text>
+                <ExternalLinkIcon />
+              </HStack>
+            </Link>
           </HStack>
-        </Link>
+        </Stack>
       </Alert>
       <Flex
         py="4"
