@@ -8,6 +8,9 @@ import {
   Spacer,
   Link,
   Text,
+  Alert,
+  AlertIcon,
+  Box,
 } from "@chakra-ui/react";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -33,6 +36,15 @@ function Footer() {
     <Flex py="4" borderTop="2px" borderTopColor={underlineColor[colorMode]}>
       <Spacer flex="1" />
       <VStack>
+        <Alert status="info" variant="solid" rounded="lg">
+          <Box>Found the project helpful? Support it on</Box>
+          <Link href="https://gitcoin.co/grants/3613/impersonator" isExternal>
+            <HStack pl="0.3rem" fontWeight="bold" textDecor="underline">
+              <Text>Gitcoin Grants</Text>
+              <ExternalLinkIcon />
+            </HStack>
+          </Link>
+        </Alert>
         <Heading size="md">
           Built by:{" "}
           <Link href="https://apoorvlathey.com/" isExternal>
