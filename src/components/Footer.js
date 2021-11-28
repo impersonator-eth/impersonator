@@ -10,6 +10,7 @@ import {
   Alert,
   HStack,
   Box,
+  Stack,
 } from "@chakra-ui/react";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -32,13 +33,21 @@ function Footer() {
       <Spacer flex="1" />
       <VStack>
         <Alert status="info" variant="solid" rounded="lg">
-          <Box>Found the project helpful? Support it on</Box>
-          <Link href="https://gitcoin.co/grants/3613/impersonator" isExternal>
-            <HStack pl="0.3rem" fontWeight="bold" textDecor="underline">
-              <Text>Gitcoin Grants</Text>
-              <ExternalLinkIcon />
+          <Stack direction={{ base: "column", md: "row" }}>
+            <Box>Found the project helpful?</Box>
+            <HStack>
+              <Text>Support it on</Text>
+              <Link
+                href="https://gitcoin.co/grants/3613/impersonator"
+                isExternal
+              >
+                <HStack fontWeight="bold" textDecor="underline">
+                  <Text>Gitcoin Grants</Text>
+                  <ExternalLinkIcon />
+                </HStack>
+              </Link>
             </HStack>
-          </Link>
+          </Stack>
         </Alert>
         <Heading size="md">
           Built by:{" "}
