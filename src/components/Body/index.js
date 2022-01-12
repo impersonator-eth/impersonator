@@ -17,15 +17,28 @@ import {
   useToast,
   CircularProgress,
   Center,
+  Spacer,
+  Flex,
+  useDisclosure,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  Tooltip,
+  HStack,
+  chakra,
+  ListItem,
 } from "@chakra-ui/react";
+import { SettingsIcon, InfoIcon } from "@chakra-ui/icons";
 import WalletConnect from "@walletconnect/client";
 import { ethers } from "ethers";
+import axios from "axios";
 import networkInfo from "./networkInfo";
 
 function Body() {
   const { colorMode } = useColorMode();
   const bgColor = { light: "white", dark: "gray.700" };
   const toast = useToast();
+  const { onOpen, onClose, isOpen } = useDisclosure();
 
   const [provider, setProvider] = useState();
   const [showAddress, setShowAddress] = useState(""); // gets displayed in input. ENS name remains as it is
@@ -37,6 +50,8 @@ function Body() {
   const [peerMeta, setPeerMeta] = useState();
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [tenderlyForkId, setTenderlyForkId] = useState("");
 
   useEffect(() => {
     const session = getCachedSession();
@@ -77,6 +92,15 @@ function Body() {
     }
     // eslint-disable-next-line
   }, [connector]);
+
+  useEffect(() => {
+    const storedTenderlyForkId = localStorage.getItem("tenderlyForkId");
+    setTenderlyForkId(storedTenderlyForkId ? storedTenderlyForkId : "");
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("tenderlyForkId", tenderlyForkId);
+  }, [tenderlyForkId]);
 
   const resolveAndValidateAddress = async () => {
     let isValid;
@@ -187,8 +211,38 @@ function Body() {
       });
 
       connector.on("call_request", async (error, payload) => {
-        console.log("EVENT", "call_request", "method", payload.method);
-        console.log("EVENT", "call_request", "params", payload.params);
+        console.log({ payload });
+
+        if (
+          payload.method === "eth_sendTransaction" &&
+          tenderlyForkId.length > 0
+        ) {
+          const { data: res } = await axios.post(
+            "https://rpc.tenderly.co/fork/" + tenderlyForkId,
+            {
+              jsonrpc: "2.0",
+              id: payload.id,
+              method: payload.method,
+              params: payload.params,
+            }
+          );
+          console.log({ res });
+
+          // Approve Call Request
+          connector.approveRequest({
+            id: res.id,
+            result: res.result,
+          });
+
+          toast({
+            title: "Txn successful",
+            description: `Hash: ${res.result}`,
+            status: "success",
+            position: "bottom-right",
+            duration: null,
+            isClosable: true,
+          });
+        }
 
         // if (error) {
         //   throw error;
@@ -281,6 +335,63 @@ function Body() {
 
   return (
     <Container my="16" minW={["0", "0", "2xl", "2xl"]}>
+      <Flex>
+        <Spacer flex="1" />
+        <Popover
+          placement="bottom-start"
+          isOpen={isOpen}
+          onOpen={onOpen}
+          onClose={onClose}
+        >
+          <PopoverTrigger>
+            <Box>
+              <Button>
+                <SettingsIcon
+                  transition="900ms rotate ease-in-out"
+                  transform={isOpen ? "rotate(33deg)" : "rotate(0deg)"}
+                />
+              </Button>
+            </Box>
+          </PopoverTrigger>
+          <PopoverContent
+            border={0}
+            boxShadow="xl"
+            rounded="xl"
+            overflowY="auto"
+          >
+            <Box px="1rem" py="1rem">
+              <HStack>
+                <Text>(optional) Tenderly Fork Id:</Text>
+                <Tooltip
+                  label={
+                    <>
+                      <Text>Simulate sending transactions on forked node.</Text>
+                      <chakra.hr bg="gray.400" />
+                      <ListItem>
+                        Create a fork on Tenderly and grab the id from it's URL.
+                      </ListItem>
+                    </>
+                  }
+                  hasArrow
+                  placement="top"
+                >
+                  <InfoIcon />
+                </Tooltip>
+              </HStack>
+              <Input
+                mt="0.5rem"
+                aria-label="fork-rpc"
+                placeholder="xxxx-xxxx-xxxx-xxxx"
+                autoComplete="off"
+                value={tenderlyForkId}
+                onChange={(e) => {
+                  setTenderlyForkId(e.target.value);
+                }}
+              />
+            </Box>
+          </PopoverContent>
+        </Popover>
+      </Flex>
       <FormControl>
         <FormLabel>Enter Address or ENS to Impersonate</FormLabel>
         <InputGroup>
@@ -308,7 +419,26 @@ function Body() {
         </InputGroup>
       </FormControl>
       <FormControl my={4}>
-        <FormLabel>WalletConnect URI</FormLabel>
+        <HStack>
+          <FormLabel>WalletConnect URI</FormLabel>
+          <Tooltip
+            label={
+              <>
+                <Text>Visit any DApp and select WalletConnect.</Text>
+                <Text>
+                  Click "Copy to Clipboard" beneath the QR code, and paste it
+                  here.
+                </Text>
+              </>
+            }
+            hasArrow
+            placement="top"
+          >
+            <Box pb="0.8rem">
+              <InfoIcon />
+            </Box>
+          </Tooltip>
+        </HStack>
         <Input
           placeholder="wc:xyz123"
           aria-label="uri"

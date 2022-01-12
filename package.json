@@ -15,6 +15,7 @@
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "@walletconnect/client": "^1.6.2",
+    "axios": "^0.24.0",
     "ethereum-checksum-address": "^0.0.6",
     "ethers": "^5.4.5",
     "framer-motion": "^4",
