@@ -1,4 +1,3 @@
-import React from "react";
 import {
   useColorMode,
   Flex,
@@ -14,9 +13,10 @@ import {
 } from "@chakra-ui/react";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { faTwitter } from "@fortawesome/free-brands-svg-icons";
 
-const Social = ({ icon, link }) => {
+const Social = ({ icon, link }: { icon: IconProp; link: string }) => {
   return (
     <Link href={link} isExternal>
       <FontAwesomeIcon icon={icon} size="lg" />

@@ -30,6 +30,7 @@ import {
 } from "@chakra-ui/react";
 import { SettingsIcon, InfoIcon } from "@chakra-ui/icons";
 import WalletConnect from "@walletconnect/client";
+import { IClientMeta } from "@walletconnect/types";
 import { ethers } from "ethers";
 import axios from "axios";
 import networkInfo from "./networkInfo";
@@ -40,14 +41,14 @@ function Body() {
   const toast = useToast();
   const { onOpen, onClose, isOpen } = useDisclosure();
 
-  const [provider, setProvider] = useState();
+  const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider>();
   const [showAddress, setShowAddress] = useState(""); // gets displayed in input. ENS name remains as it is
   const [address, setAddress] = useState(""); // internal resolved address
   const [isAddressValid, setIsAddressValid] = useState(true);
   const [uri, setUri] = useState("");
   const [networkIndex, setNetworkIndex] = useState(0);
-  const [connector, setConnector] = useState();
-  const [peerMeta, setPeerMeta] = useState();
+  const [connector, setConnector] = useState<WalletConnect>();
+  const [peerMeta, setPeerMeta] = useState<IClientMeta>();
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -67,7 +68,8 @@ function Body() {
           setPeerMeta(_connector.peerMeta);
           setIsConnected(true);
 
-          const chainId = _connector.chainId.chainID;
+          const chainId = (_connector.chainId as unknown as { chainID: number })
+            .chainID;
           for (let i = 0; i < networkInfo.length; i++) {
             if (getChainId(i) === chainId) {
               setNetworkIndex(i);
@@ -109,7 +111,7 @@ function Body() {
       isValid = false;
     } else {
       // Resolve ENS
-      const resolvedAddress = await provider.resolveName(address);
+      const resolvedAddress = await provider!.resolveName(address);
       if (resolvedAddress) {
         setAddress(resolvedAddress);
         _address = resolvedAddress;
@@ -135,7 +137,7 @@ function Body() {
     return { isValid, _address: _address };
   };
 
-  const getChainId = (networkIndex) => {
+  const getChainId = (networkIndex: number) => {
     return networkInfo[networkIndex].chainID;
   };
 
@@ -289,11 +291,17 @@ function Body() {
     console.log("ACTION", "rejectSession");
     if (connector) {
       connector.rejectSession();
-      setPeerMeta(null);
+      setPeerMeta(undefined);
     }
   };
 
-  const updateSession = ({ newChainId, newAddress }) => {
+  const updateSession = ({
+    newChainId,
+    newAddress,
+  }: {
+    newChainId?: number;
+    newAddress?: string;
+  }) => {
     let _chainId = newChainId || getChainId(networkIndex);
     let _address = newAddress || address;
 
@@ -312,7 +320,9 @@ function Body() {
     const { isValid, _address } = await resolveAndValidateAddress();
 
     if (isValid) {
-      updateSession({ newAddress: _address });
+      updateSession({
+        newAddress: _address,
+      });
     }
   };
 
@@ -322,13 +332,13 @@ function Body() {
     if (connector) {
       connector.killSession();
 
-      setPeerMeta(null);
+      setPeerMeta(undefined);
       setIsConnected(false);
     }
   };
 
   const reset = () => {
-    setPeerMeta(null);
+    setPeerMeta(undefined);
     setIsConnected(false);
     localStorage.removeItem("walletconnect");
   };
@@ -456,9 +466,11 @@ function Body() {
         _hover={{ cursor: "pointer" }}
         value={networkIndex}
         onChange={(e) => {
-          const _networkIndex = e.target.value;
+          const _networkIndex = parseInt(e.target.value);
           setNetworkIndex(_networkIndex);
-          updateSession({ newChainId: getChainId(_networkIndex) });
+          updateSession({
+            newChainId: getChainId(_networkIndex),
+          });
         }}
       >
         {networkInfo.map((network, i) => (
