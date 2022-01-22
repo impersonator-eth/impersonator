@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Container,
   InputGroup,
@@ -27,19 +27,63 @@ import {
   HStack,
   chakra,
   ListItem,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Heading,
+  Collapse,
 } from "@chakra-ui/react";
-import { SettingsIcon, InfoIcon } from "@chakra-ui/icons";
+import {
+  SettingsIcon,
+  InfoIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  CopyIcon,
+  DeleteIcon,
+} from "@chakra-ui/icons";
 import WalletConnect from "@walletconnect/client";
 import { IClientMeta } from "@walletconnect/types";
 import { ethers } from "ethers";
 import axios from "axios";
 import networkInfo from "./networkInfo";
 
+const slicedText = (txt: string) => {
+  return txt.length > 6
+    ? `${txt.slice(0, 4)}...${txt.slice(txt.length - 2, txt.length)}`
+    : txt;
+};
+
+const CopyToClipboard = ({ txt }: { txt: string }) => (
+  <Button
+    onClick={() => {
+      navigator.clipboard.writeText(txt);
+    }}
+    size="sm"
+  >
+    <CopyIcon />
+  </Button>
+);
+
+const TD = ({ txt }: { txt: string }) => (
+  <Td>
+    <HStack>
+      <Tooltip label={txt} hasArrow placement="top">
+        <Text>{slicedText(txt)}</Text>
+      </Tooltip>
+      <CopyToClipboard txt={txt} />
+    </HStack>
+  </Td>
+);
+
 function Body() {
   const { colorMode } = useColorMode();
   const bgColor = { light: "white", dark: "gray.700" };
   const toast = useToast();
   const { onOpen, onClose, isOpen } = useDisclosure();
+  const { isOpen: tableIsOpen, onToggle: tableOnToggle } = useDisclosure();
 
   const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider>();
   const [showAddress, setShowAddress] = useState(""); // gets displayed in input. ENS name remains as it is
@@ -53,6 +97,15 @@ function Body() {
   const [loading, setLoading] = useState(false);
 
   const [tenderlyForkId, setTenderlyForkId] = useState("");
+  const [sendTxnData, setSendTxnData] = useState<
+    {
+      id: number;
+      from: string;
+      to: string;
+      data: string;
+      value: string;
+    }[]
+  >([]);
 
   useEffect(() => {
     const { session, _showAddress } = getCachedSession();
@@ -178,7 +231,7 @@ function Body() {
         console.error(err);
         toast({
           title: "Couldn't Connect",
-          description: "Refresh DApp and Connect again",
+          description: "Refresh dApp and Connect again",
           status: "error",
           isClosable: true,
           duration: 2000,
@@ -220,35 +273,52 @@ function Body() {
       connector.on("call_request", async (error, payload) => {
         console.log({ payload });
 
-        if (
-          payload.method === "eth_sendTransaction" &&
-          tenderlyForkId.length > 0
-        ) {
-          const { data: res } = await axios.post(
-            "https://rpc.tenderly.co/fork/" + tenderlyForkId,
-            {
-              jsonrpc: "2.0",
+        if (payload.method === "eth_sendTransaction") {
+          setSendTxnData((data) => {
+            const newTxn = {
               id: payload.id,
-              method: payload.method,
-              params: payload.params,
+              from: payload.params[0].from,
+              to: payload.params[0].to,
+              data: payload.params[0].data,
+              value: payload.params[0].value
+                ? parseInt(payload.params[0].value, 16).toString()
+                : "0",
+            };
+
+            if (data.some((d) => d.id === newTxn.id)) {
+              return data;
+            } else {
+              return [newTxn, ...data];
             }
-          );
-          console.log({ res });
-
-          // Approve Call Request
-          connector.approveRequest({
-            id: res.id,
-            result: res.result,
           });
 
-          toast({
-            title: "Txn successful",
-            description: `Hash: ${res.result}`,
-            status: "success",
-            position: "bottom-right",
-            duration: null,
-            isClosable: true,
-          });
+          if (tenderlyForkId.length > 0) {
+            const { data: res } = await axios.post(
+              "https://rpc.tenderly.co/fork/" + tenderlyForkId,
+              {
+                jsonrpc: "2.0",
+                id: payload.id,
+                method: payload.method,
+                params: payload.params,
+              }
+            );
+            console.log({ res });
+
+            // Approve Call Request
+            connector.approveRequest({
+              id: res.id,
+              result: res.result,
+            });
+
+            toast({
+              title: "Txn successful",
+              description: `Hash: ${res.result}`,
+              status: "success",
+              position: "bottom-right",
+              duration: null,
+              isClosable: true,
+            });
+          }
         }
 
         // if (error) {
@@ -439,7 +509,7 @@ function Body() {
           <Tooltip
             label={
               <>
-                <Text>Visit any DApp and select WalletConnect.</Text>
+                <Text>Visit any dApp and select WalletConnect.</Text>
                 <Text>
                   Click "Copy to Clipboard" beneath the QR code, and paste it
                   here.
@@ -536,6 +606,72 @@ function Body() {
           </VStack>
         </>
       )}
+      <Center>
+        <Box
+          minW={["0", "0", "2xl", "2xl"]}
+          overflowX={"auto"}
+          mt="2rem"
+          pt="0.5rem"
+          pl="1rem"
+          border={"1px solid"}
+          borderColor={"white.800"}
+          rounded="lg"
+        >
+          <Flex py="2" pl="2" pr="4">
+            <HStack cursor={"pointer"} onClick={tableOnToggle}>
+              <Text fontSize={"xl"}>
+                {tableIsOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+              </Text>
+              <Heading size={"md"}>eth_sendTransactions</Heading>
+              <Tooltip
+                label={
+                  <>
+                    <Text>
+                      "eth_sendTransaction" requests by the dApp are shown here
+                      (latest on top)
+                    </Text>
+                  </>
+                }
+                hasArrow
+                placement="top"
+              >
+                <Box pb="0.8rem">
+                  <InfoIcon />
+                </Box>
+              </Tooltip>
+            </HStack>
+            <Flex flex="1" />
+            {sendTxnData.length > 0 && (
+              <Button onClick={() => setSendTxnData([])}>
+                <DeleteIcon />
+                <Text pl="0.5rem">Clear</Text>
+              </Button>
+            )}
+          </Flex>
+          <Collapse in={tableIsOpen} animateOpacity>
+            <Table variant="simple">
+              <Thead>
+                <Tr>
+                  <Th>from</Th>
+                  <Th>to</Th>
+                  <Th>data</Th>
+                  <Th>value</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {sendTxnData.map((d) => (
+                  <Tr key={d.id}>
+                    <TD txt={d.from} />
+                    <TD txt={d.to} />
+                    <TD txt={d.data} />
+                    <TD txt={d.value} />
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </Collapse>
+        </Box>
+      </Center>
     </Container>
   );
 }
