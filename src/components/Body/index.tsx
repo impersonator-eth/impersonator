@@ -55,14 +55,14 @@ function Body() {
   const [tenderlyForkId, setTenderlyForkId] = useState("");
 
   useEffect(() => {
-    const session = getCachedSession();
+    const { session, _showAddress } = getCachedSession();
     if (session) {
       let _connector = new WalletConnect({ session });
 
       if (_connector.peerMeta) {
         try {
           setConnector(_connector);
-          setShowAddress(_connector.accounts[0]);
+          setShowAddress(_showAddress ? _showAddress : _connector.accounts[0]);
           setAddress(_connector.accounts[0]);
           setUri(_connector.uri);
           setPeerMeta(_connector.peerMeta);
@@ -86,6 +86,9 @@ function Body() {
     setProvider(
       new ethers.providers.JsonRpcProvider(process.env.REACT_APP_PROVIDER_URL)
     );
+
+    const storedTenderlyForkId = localStorage.getItem("tenderlyForkId");
+    setTenderlyForkId(storedTenderlyForkId ? storedTenderlyForkId : "");
   }, []);
 
   useEffect(() => {
@@ -96,13 +99,12 @@ function Body() {
   }, [connector]);
 
   useEffect(() => {
-    const storedTenderlyForkId = localStorage.getItem("tenderlyForkId");
-    setTenderlyForkId(storedTenderlyForkId ? storedTenderlyForkId : "");
-  }, []);
-
-  useEffect(() => {
     localStorage.setItem("tenderlyForkId", tenderlyForkId);
   }, [tenderlyForkId]);
+
+  useEffect(() => {
+    localStorage.setItem("showAddress", showAddress);
+  }, [showAddress]);
 
   const resolveAndValidateAddress = async () => {
     let isValid;
@@ -143,6 +145,9 @@ function Body() {
 
   const getCachedSession = () => {
     const local = localStorage ? localStorage.getItem("walletconnect") : null;
+    const _showAddress = localStorage
+      ? localStorage.getItem("showAddress")
+      : null;
 
     let session = null;
     if (local) {
@@ -152,7 +157,7 @@ function Body() {
         throw error;
       }
     }
-    return session;
+    return { session, _showAddress };
   };
 
   const initWalletConnect = async () => {
