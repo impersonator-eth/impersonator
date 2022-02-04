@@ -32,7 +32,7 @@ function Footer() {
     <Flex py="4" borderTop="2px" borderTopColor={underlineColor[colorMode]}>
       <Spacer flex="1" />
       <VStack>
-        <Alert status="info" variant="solid" rounded="lg">
+        <Alert status="info" variant="solid" rounded="lg" display={"none"}>
           <Stack direction={{ base: "column", md: "row" }}>
             <Box>Found the project helpful?</Box>
             <HStack>
