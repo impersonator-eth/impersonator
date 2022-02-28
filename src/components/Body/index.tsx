@@ -88,7 +88,7 @@ function Body() {
 
   const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider>();
   const [showAddress, setShowAddress] = useState(addressFromURL ?? ""); // gets displayed in input. ENS name remains as it is
-  const [address, setAddress] = useState(""); // internal resolved address
+  const [address, setAddress] = useState(addressFromURL ?? ""); // internal resolved address
   const [isAddressValid, setIsAddressValid] = useState(true);
   const [uri, setUri] = useState("");
   const [networkIndex, setNetworkIndex] = useState(0);
