@@ -81,13 +81,14 @@ const TD = ({ txt }: { txt: string }) => (
 function Body() {
   const { colorMode } = useColorMode();
   const bgColor = { light: "white", dark: "gray.700" };
+  const addressFromURL = new URLSearchParams(window.location.search).get("address");
   const toast = useToast();
   const { onOpen, onClose, isOpen } = useDisclosure();
   const { isOpen: tableIsOpen, onToggle: tableOnToggle } = useDisclosure();
 
   const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider>();
-  const [showAddress, setShowAddress] = useState(""); // gets displayed in input. ENS name remains as it is
-  const [address, setAddress] = useState(""); // internal resolved address
+  const [showAddress, setShowAddress] = useState(addressFromURL ?? ""); // gets displayed in input. ENS name remains as it is
+  const [address, setAddress] = useState(addressFromURL ?? ""); // internal resolved address
   const [isAddressValid, setIsAddressValid] = useState(true);
   const [uri, setUri] = useState("");
   const [networkIndex, setNetworkIndex] = useState(0);
