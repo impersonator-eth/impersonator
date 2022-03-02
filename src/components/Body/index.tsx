@@ -594,7 +594,7 @@ function Body() {
             {!isConnected && (
               <Box pt={6}>
                 <Button onClick={approveSession} mr={10}>
-                  Approve ✔
+                  Connect ✔
                 </Button>
                 <Button onClick={rejectSession}>Reject ❌</Button>
               </Box>
