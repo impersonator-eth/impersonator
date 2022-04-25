@@ -121,9 +121,9 @@ function Body() {
           setUri(_connector.uri);
           setPeerMeta(_connector.peerMeta);
           setIsConnected(true);
-
           const chainId = (_connector.chainId as unknown as { chainID: number })
-            .chainID;
+            .chainID || _connector.chainId;
+
           for (let i = 0; i < networkInfo.length; i++) {
             if (getChainId(i) === chainId) {
               setNetworkIndex(i);
