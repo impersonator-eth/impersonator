@@ -47,6 +47,10 @@ const networkInfo = [
     chainID: 5,
     name: "Goerli Testnet",
   },
+  {
+    chainID: 1337,
+    name: "Localhost 8545",
+  },
 ];
 
 export default networkInfo;
