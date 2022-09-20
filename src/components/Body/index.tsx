@@ -48,6 +48,8 @@ import WalletConnect from "@walletconnect/client";
 import { IClientMeta } from "@walletconnect/types";
 import { ethers } from "ethers";
 import axios from "axios";
+import { useSafeInject } from "../../contexts/SafeInjectContext";
+import Tab from "./Tab";
 import networkInfo from "./networkInfo";
 
 const slicedText = (txt: string) => {
@@ -81,10 +83,21 @@ const TD = ({ txt }: { txt: string }) => (
 function Body() {
   const { colorMode } = useColorMode();
   const bgColor = { light: "white", dark: "gray.700" };
-  const addressFromURL = new URLSearchParams(window.location.search).get("address");
+  const addressFromURL = new URLSearchParams(window.location.search).get(
+    "address"
+  );
   const toast = useToast();
   const { onOpen, onClose, isOpen } = useDisclosure();
   const { isOpen: tableIsOpen, onToggle: tableOnToggle } = useDisclosure();
+
+  const {
+    setAddress: setIFrameAddress,
+    appUrl,
+    setAppUrl,
+    setRpcUrl,
+    iframeRef,
+    latestTransaction,
+  } = useSafeInject();
 
   const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider>();
   const [showAddress, setShowAddress] = useState(addressFromURL ?? ""); // gets displayed in input. ENS name remains as it is
@@ -96,6 +109,11 @@ function Body() {
   const [peerMeta, setPeerMeta] = useState<IClientMeta>();
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [selectedTabIndex, setSelectedTabIndex] = useState(0);
+  const [isIFrameLoading, setIsIFrameLoading] = useState(false);
+  const [inputAppUrl, setInputAppUrl] = useState<string>();
+  const [iframeKey, setIframeKey] = useState(0); // hacky way to reload iframe when key changes
 
   const [tenderlyForkId, setTenderlyForkId] = useState("");
   const [sendTxnData, setSendTxnData] = useState<
@@ -121,8 +139,9 @@ function Body() {
           setUri(_connector.uri);
           setPeerMeta(_connector.peerMeta);
           setIsConnected(true);
-          const chainId = (_connector.chainId as unknown as { chainID: number })
-            .chainID || _connector.chainId;
+          const chainId =
+            (_connector.chainId as unknown as { chainID: number }).chainID ||
+            _connector.chainId;
 
           for (let i = 0; i < networkInfo.length; i++) {
             if (getChainId(i) === chainId) {
@@ -138,7 +157,9 @@ function Body() {
     }
 
     setProvider(
-      new ethers.providers.JsonRpcProvider(process.env.REACT_APP_PROVIDER_URL)
+      new ethers.providers.JsonRpcProvider(
+        `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`
+      )
     );
 
     const storedTenderlyForkId = localStorage.getItem("tenderlyForkId");
@@ -159,6 +180,52 @@ function Body() {
   useEffect(() => {
     localStorage.setItem("showAddress", showAddress);
   }, [showAddress]);
+
+  useEffect(() => {
+    setIFrameAddress(address);
+  }, [address]);
+
+  useEffect(() => {
+    setRpcUrl(networkInfo[networkIndex].rpc);
+  }, [networkIndex]);
+
+  useEffect(() => {
+    if (latestTransaction) {
+      const newTxn = {
+        from: address,
+        ...latestTransaction,
+      };
+
+      setSendTxnData((data) => {
+        if (data.some((d) => d.id === newTxn.id)) {
+          return data;
+        } else {
+          return [
+            { ...newTxn, value: parseInt(newTxn.value, 16).toString() },
+            ...data,
+          ];
+        }
+      });
+
+      if (tenderlyForkId.length > 0) {
+        axios
+          .post("https://rpc.tenderly.co/fork/" + tenderlyForkId, {
+            jsonrpc: "2.0",
+            id: newTxn.id,
+            method: "eth_sendTransaction",
+            params: [
+              {
+                from: newTxn.from,
+                to: newTxn.to,
+                value: newTxn.value,
+                data: newTxn.data,
+              },
+            ],
+          })
+          .then((res) => console.log(res.data));
+      }
+    }
+  }, [latestTransaction, tenderlyForkId]);
 
   const resolveAndValidateAddress = async () => {
     let isValid;
@@ -242,6 +309,22 @@ function Body() {
     } else {
       setLoading(false);
     }
+  };
+
+  const initIFrame = async () => {
+    setIsIFrameLoading(true);
+    if (inputAppUrl === appUrl) {
+      setIsIFrameLoading(false);
+      return;
+    }
+
+    const { isValid } = await resolveAndValidateAddress();
+    if (!isValid) {
+      setIsIFrameLoading(false);
+      return;
+    }
+
+    setAppUrl(inputAppUrl);
   };
 
   const subscribeToEvents = () => {
@@ -392,13 +475,35 @@ function Body() {
   };
 
   const updateAddress = async () => {
-    setLoading(true);
+    if (selectedTabIndex === 0) {
+      setLoading(true);
+    } else {
+      setIsIFrameLoading(true);
+    }
     const { isValid, _address } = await resolveAndValidateAddress();
 
     if (isValid) {
+      if (selectedTabIndex === 0) {
+        updateSession({
+          newAddress: _address,
+        });
+      } else {
+        setIFrameAddress(_address);
+        setIframeKey((key) => key + 1);
+        setIsIFrameLoading(false);
+      }
+    }
+  };
+
+  const updateNetwork = (_networkIndex: number) => {
+    setNetworkIndex(_networkIndex);
+
+    if (selectedTabIndex === 0) {
       updateSession({
-        newAddress: _address,
+        newChainId: getChainId(_networkIndex),
       });
+    } else {
+      setIframeKey((key) => key + 1);
     }
   };
 
@@ -482,8 +587,7 @@ function Body() {
         <FormLabel>Enter Address or ENS to Impersonate</FormLabel>
         <InputGroup>
           <Input
-            placeholder="Address"
-            aria-label="address"
+            placeholder="vitalik.eth"
             autoComplete="off"
             value={showAddress}
             onChange={(e) => {
@@ -495,7 +599,8 @@ function Body() {
             bg={bgColor[colorMode]}
             isInvalid={!isAddressValid}
           />
-          {isConnected && (
+          {((selectedTabIndex === 0 && isConnected) ||
+            (selectedTabIndex === 1 && appUrl)) && (
             <InputRightElement width="4.5rem" mr="1rem">
               <Button h="1.75rem" size="sm" onClick={updateAddress}>
                 Update
@@ -504,49 +609,15 @@ function Body() {
           )}
         </InputGroup>
       </FormControl>
-      <FormControl my={4}>
-        <HStack>
-          <FormLabel>WalletConnect URI</FormLabel>
-          <Tooltip
-            label={
-              <>
-                <Text>Visit any dApp and select WalletConnect.</Text>
-                <Text>
-                  Click "Copy to Clipboard" beneath the QR code, and paste it
-                  here.
-                </Text>
-              </>
-            }
-            hasArrow
-            placement="top"
-          >
-            <Box pb="0.8rem">
-              <InfoIcon />
-            </Box>
-          </Tooltip>
-        </HStack>
-        <Input
-          placeholder="wc:xyz123"
-          aria-label="uri"
-          autoComplete="off"
-          value={uri}
-          onChange={(e) => setUri(e.target.value)}
-          bg={bgColor[colorMode]}
-          isDisabled={isConnected}
-        />
-      </FormControl>
       <Select
-        mb={4}
+        mt={4}
         placeholder="Select Network"
         variant="filled"
         _hover={{ cursor: "pointer" }}
         value={networkIndex}
         onChange={(e) => {
           const _networkIndex = parseInt(e.target.value);
-          setNetworkIndex(_networkIndex);
-          updateSession({
-            newChainId: getChainId(_networkIndex),
-          });
+          updateNetwork(_networkIndex);
         }}
       >
         {networkInfo.map((network, i) => (
@@ -555,56 +626,169 @@ function Body() {
           </option>
         ))}
       </Select>
-      <Button onClick={initWalletConnect} isDisabled={isConnected}>
-        Connect
-      </Button>
-      {loading && (
-        <Center>
-          <VStack>
-            <Box>
-              <CircularProgress isIndeterminate />
-            </Box>
-            {!isConnected && (
-              <Box pt={6}>
-                <Button
-                  onClick={() => {
-                    setLoading(false);
-                    reset();
-                  }}
-                >
-                  Stop Loading ☠
-                </Button>
-              </Box>
-            )}
-          </VStack>
-        </Center>
-      )}
-      {peerMeta && (
+      <Center flexDir="column">
+        <HStack
+          mt="1rem"
+          minH="3rem"
+          px="1.5rem"
+          spacing={"8"}
+          background="gray.700"
+          borderRadius="xl"
+        >
+          {["WalletConnect", "IFrame"].map((t, i) => (
+            <Tab
+              key={i}
+              tabIndex={i}
+              selectedTabIndex={selectedTabIndex}
+              setSelectedTabIndex={setSelectedTabIndex}
+            >
+              {t}
+            </Tab>
+          ))}
+        </HStack>
+      </Center>
+      {selectedTabIndex === 0 ? (
         <>
-          <Box mt={4} fontSize={24} fontWeight="semibold">
-            {isConnected ? "✅ Connected To:" : "⚠ Allow to Connect"}
-          </Box>
-          <VStack>
-            <Avatar src={peerMeta.icons[0]} alt={peerMeta.name} />
-            <Text fontWeight="bold">{peerMeta.name}</Text>
-            <Text fontSize="sm">{peerMeta.description}</Text>
-            <Link href={peerMeta.url} textDecor="underline">
-              {peerMeta.url}
-            </Link>
-            {!isConnected && (
-              <Box pt={6}>
-                <Button onClick={approveSession} mr={10}>
-                  Connect ✔
-                </Button>
-                <Button onClick={rejectSession}>Reject ❌</Button>
+          <FormControl my={4}>
+            <HStack>
+              <FormLabel>WalletConnect URI</FormLabel>
+              <Tooltip
+                label={
+                  <>
+                    <Text>Visit any dApp and select WalletConnect.</Text>
+                    <Text>
+                      Click "Copy to Clipboard" beneath the QR code, and paste
+                      it here.
+                    </Text>
+                  </>
+                }
+                hasArrow
+                placement="top"
+              >
+                <Box pb="0.8rem">
+                  <InfoIcon />
+                </Box>
+              </Tooltip>
+            </HStack>
+            <Input
+              placeholder="wc:xyz123"
+              aria-label="uri"
+              autoComplete="off"
+              value={uri}
+              onChange={(e) => setUri(e.target.value)}
+              bg={bgColor[colorMode]}
+              isDisabled={isConnected}
+            />
+          </FormControl>
+          <Center>
+            <Button onClick={initWalletConnect} isDisabled={isConnected}>
+              Connect
+            </Button>
+          </Center>
+          {loading && (
+            <Center>
+              <VStack>
+                <Box>
+                  <CircularProgress isIndeterminate />
+                </Box>
+                {!isConnected && (
+                  <Box pt={6}>
+                    <Button
+                      onClick={() => {
+                        setLoading(false);
+                        reset();
+                      }}
+                    >
+                      Stop Loading ☠
+                    </Button>
+                  </Box>
+                )}
+              </VStack>
+            </Center>
+          )}
+          {peerMeta && (
+            <>
+              <Box mt={4} fontSize={24} fontWeight="semibold">
+                {isConnected ? "✅ Connected To:" : "⚠ Allow to Connect"}
               </Box>
+              <VStack>
+                <Avatar src={peerMeta.icons[0]} alt={peerMeta.name} />
+                <Text fontWeight="bold">{peerMeta.name}</Text>
+                <Text fontSize="sm">{peerMeta.description}</Text>
+                <Link href={peerMeta.url} textDecor="underline">
+                  {peerMeta.url}
+                </Link>
+                {!isConnected && (
+                  <Box pt={6}>
+                    <Button onClick={approveSession} mr={10}>
+                      Connect ✔
+                    </Button>
+                    <Button onClick={rejectSession}>Reject ❌</Button>
+                  </Box>
+                )}
+                {isConnected && (
+                  <Box pt={6}>
+                    <Button onClick={killSession}>Disconnect ☠</Button>
+                  </Box>
+                )}
+              </VStack>
+            </>
+          )}
+        </>
+      ) : (
+        <>
+          <FormControl my={4}>
+            <HStack>
+              <FormLabel>dapp URL</FormLabel>
+              <Tooltip
+                label={
+                  <>
+                    <Text>Paste the URL of dapp you want to connect to</Text>
+                    <Text>
+                      Note: Some dapps might not support it, so use
+                      WalletConnect in that case
+                    </Text>
+                  </>
+                }
+                hasArrow
+                placement="top"
+              >
+                <Box pb="0.8rem">
+                  <InfoIcon />
+                </Box>
+              </Tooltip>
+            </HStack>
+            <Input
+              placeholder="https://app.uniswap.org/"
+              aria-label="dapp-url"
+              autoComplete="off"
+              value={inputAppUrl}
+              onChange={(e) => setInputAppUrl(e.target.value)}
+              bg={bgColor[colorMode]}
+            />
+          </FormControl>
+          <Center>
+            <Button onClick={() => initIFrame()} isLoading={isIFrameLoading}>
+              Connect
+            </Button>
+          </Center>
+          <Center mt="1rem" ml="-60" w="70rem">
+            {appUrl && (
+              <iframe
+                title="app"
+                src={appUrl}
+                key={iframeKey}
+                width="1500rem"
+                height="600rem"
+                style={{
+                  border: "1px solid white",
+                  background: "white",
+                }}
+                ref={iframeRef}
+                onLoad={() => setIsIFrameLoading(false)}
+              />
             )}
-            {isConnected && (
-              <Box pt={6}>
-                <Button onClick={killSession}>Disconnect ☠</Button>
-              </Box>
-            )}
-          </VStack>
+          </Center>
         </>
       )}
       <Center>
