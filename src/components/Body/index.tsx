@@ -495,6 +495,18 @@ function Body() {
     }
   };
 
+  const updateNetwork = (_networkIndex: number) => {
+    setNetworkIndex(_networkIndex);
+
+    if (selectedTabIndex === 0) {
+      updateSession({
+        newChainId: getChainId(_networkIndex),
+      });
+    } else {
+      setIframeKey((key) => key + 1);
+    }
+  };
+
   const killSession = () => {
     console.log("ACTION", "killSession");
 
@@ -605,10 +617,7 @@ function Body() {
         value={networkIndex}
         onChange={(e) => {
           const _networkIndex = parseInt(e.target.value);
-          setNetworkIndex(_networkIndex);
-          updateSession({
-            newChainId: getChainId(_networkIndex),
-          });
+          updateNetwork(_networkIndex);
         }}
       >
         {networkInfo.map((network, i) => (
