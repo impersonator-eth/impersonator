@@ -670,15 +670,17 @@ function Body() {
                 </Box>
               </Tooltip>
             </HStack>
-            <Input
-              placeholder="wc:xyz123"
-              aria-label="uri"
-              autoComplete="off"
-              value={uri}
-              onChange={(e) => setUri(e.target.value)}
-              bg={bgColor[colorMode]}
-              isDisabled={isConnected}
-            />
+            <Box>
+              <Input
+                placeholder="wc:xyz123"
+                aria-label="uri"
+                autoComplete="off"
+                value={uri}
+                onChange={(e) => setUri(e.target.value)}
+                bg={bgColor[colorMode]}
+                isDisabled={isConnected}
+              />
+            </Box>
           </FormControl>
           <Center>
             <Button onClick={initWalletConnect} isDisabled={isConnected}>
