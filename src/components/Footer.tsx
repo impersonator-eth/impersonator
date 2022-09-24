@@ -36,16 +36,33 @@ function Footer() {
           <Stack direction={{ base: "column", md: "row" }}>
             <Box>Found the project helpful?</Box>
             <HStack>
-              <Text>Support it on</Text>
-              <Link
-                href="https://gitcoin.co/grants/3613/impersonator"
-                isExternal
-              >
-                <HStack fontWeight="bold" textDecor="underline">
-                  <Text>Gitcoin Grants</Text>
-                  <ExternalLinkIcon />
-                </HStack>
-              </Link>
+              {process.env.REACT_APP_GITCOIN_GRANTS_ACTIVE === "true" ? (
+                <>
+                  <Text>Support it on</Text>
+                  <Link
+                    href="https://gitcoin.co/grants/3613/impersonator"
+                    isExternal
+                  >
+                    <HStack fontWeight="bold" textDecor="underline">
+                      <Text>Gitcoin Grants</Text>
+                      <ExternalLinkIcon />
+                    </HStack>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Text>Support at</Text>
+                  <Link
+                    href="https://etherscan.io/address/apoorv.eth"
+                    isExternal
+                  >
+                    <HStack fontWeight="bold" textDecor="underline">
+                      <Text>apoorv.eth</Text>
+                      <ExternalLinkIcon />
+                    </HStack>
+                  </Link>
+                </>
+              )}
             </HStack>
           </Stack>
         </Alert>
