@@ -1,4 +1,8 @@
-const networkInfo = [
+const networkInfo: {
+  chainID: number;
+  name: string;
+  rpc: string;
+}[] = [
   {
     chainID: 1,
     name: "Ethereum Mainnet",

@@ -35,6 +35,16 @@ import {
   Td,
   Heading,
   Collapse,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  Grid,
+  GridItem,
+  Image,
+  Spinner,
 } from "@chakra-ui/react";
 import {
   SettingsIcon,
@@ -43,6 +53,7 @@ import {
   ChevronUpIcon,
   CopyIcon,
   DeleteIcon,
+  CloseIcon,
 } from "@chakra-ui/icons";
 import WalletConnect from "@walletconnect/client";
 import { IClientMeta } from "@walletconnect/types";
@@ -51,6 +62,13 @@ import axios from "axios";
 import { useSafeInject } from "../../contexts/SafeInjectContext";
 import Tab from "./Tab";
 import networkInfo from "./networkInfo";
+
+interface SafeDappInfo {
+  id: number;
+  url: string;
+  name: string;
+  iconUrl: string;
+}
 
 const slicedText = (txt: string) => {
   return txt.length > 6
@@ -89,6 +107,11 @@ function Body() {
   const toast = useToast();
   const { onOpen, onClose, isOpen } = useDisclosure();
   const { isOpen: tableIsOpen, onToggle: tableOnToggle } = useDisclosure();
+  const {
+    isOpen: isSafeAppsOpen,
+    onOpen: openSafeAapps,
+    onClose: closeSafeApps,
+  } = useDisclosure();
 
   const {
     setAddress: setIFrameAddress,
@@ -112,6 +135,11 @@ function Body() {
 
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
   const [isIFrameLoading, setIsIFrameLoading] = useState(false);
+  const [safeDapps, setSafeDapps] = useState<{
+    [networkIndex: number]: SafeDappInfo[];
+  }>({});
+  const [searchSafeDapp, setSearchSafeDapp] = useState<string>();
+  const [filteredSafeDapps, setFilteredSafeDapps] = useState<SafeDappInfo[]>();
   const [inputAppUrl, setInputAppUrl] = useState<string>();
   const [iframeKey, setIframeKey] = useState(0); // hacky way to reload iframe when key changes
 
@@ -227,6 +255,43 @@ function Body() {
     }
   }, [latestTransaction, tenderlyForkId]);
 
+  useEffect(() => {
+    const fetchSafeDapps = async (networkIndex: number) => {
+      const response = await axios.get<SafeDappInfo[]>(
+        `https://safe-client.gnosis.io/v1/chains/${networkInfo[networkIndex].chainID}/safe-apps`
+      );
+      setSafeDapps((dapps) => ({
+        ...dapps,
+        [networkIndex]: response.data.filter((d) => ![29, 11].includes(d.id)), // Filter out Transaction Builder and WalletConnect
+      }));
+    };
+
+    if (isSafeAppsOpen && !safeDapps[networkIndex]) {
+      fetchSafeDapps(networkIndex);
+    }
+  }, [isSafeAppsOpen, safeDapps, networkIndex]);
+
+  useEffect(() => {
+    if (safeDapps[networkIndex]) {
+      setFilteredSafeDapps(
+        safeDapps[networkIndex].filter((dapp) => {
+          if (!searchSafeDapp) return true;
+
+          return (
+            dapp.name
+              .toLowerCase()
+              .indexOf(searchSafeDapp.toLocaleLowerCase()) !== -1 ||
+            dapp.url
+              .toLowerCase()
+              .indexOf(searchSafeDapp.toLocaleLowerCase()) !== -1
+          );
+        })
+      );
+    } else {
+      setFilteredSafeDapps(undefined);
+    }
+  }, [safeDapps, networkIndex, searchSafeDapp]);
+
   const resolveAndValidateAddress = async () => {
     let isValid;
     let _address = address;
@@ -311,9 +376,9 @@ function Body() {
     }
   };
 
-  const initIFrame = async () => {
+  const initIFrame = async (_inputAppUrl = inputAppUrl) => {
     setIsIFrameLoading(true);
-    if (inputAppUrl === appUrl) {
+    if (_inputAppUrl === appUrl) {
       setIsIFrameLoading(false);
       return;
     }
@@ -324,7 +389,7 @@ function Body() {
       return;
     }
 
-    setAppUrl(inputAppUrl);
+    setAppUrl(_inputAppUrl);
   };
 
   const subscribeToEvents = () => {
@@ -600,7 +665,7 @@ function Body() {
             isInvalid={!isAddressValid}
           />
           {((selectedTabIndex === 0 && isConnected) ||
-            (selectedTabIndex === 1 && appUrl)) && (
+            (selectedTabIndex === 1 && appUrl && !isIFrameLoading)) && (
             <InputRightElement width="4.5rem" mr="1rem">
               <Button h="1.75rem" size="sm" onClick={updateAddress}>
                 Update
@@ -611,7 +676,6 @@ function Body() {
       </FormControl>
       <Select
         mt={4}
-        placeholder="Select Network"
         variant="filled"
         _hover={{ cursor: "pointer" }}
         value={networkIndex}
@@ -635,7 +699,7 @@ function Body() {
           background="gray.700"
           borderRadius="xl"
         >
-          {["WalletConnect", "IFrame"].map((t, i) => (
+          {["WalletConnect", "iFrame"].map((t, i) => (
             <Tab
               key={i}
               tabIndex={i}
@@ -759,6 +823,94 @@ function Body() {
                   <InfoIcon />
                 </Box>
               </Tooltip>
+              <Spacer />
+              <Box pb="0.5rem">
+                <Button size="sm" onClick={openSafeAapps}>
+                  Supported dapps
+                </Button>
+              </Box>
+              <Modal isOpen={isSafeAppsOpen} onClose={closeSafeApps} isCentered>
+                <ModalOverlay
+                  bg="none"
+                  backdropFilter="auto"
+                  backdropBlur="3px"
+                />
+                <ModalContent minW="60rem">
+                  <ModalHeader>Select a dapp</ModalHeader>
+                  <ModalCloseButton />
+                  <ModalBody>
+                    <Box
+                      minH="30rem"
+                      maxH="30rem"
+                      overflow="scroll"
+                      overflowX="auto"
+                      overflowY="auto"
+                    >
+                      {(!safeDapps || !safeDapps[networkIndex]) && (
+                        <Center py="3rem" w="100%">
+                          <Spinner />
+                        </Center>
+                      )}
+                      <Box pb="2rem" px="2rem">
+                        {safeDapps && safeDapps[networkIndex] && (
+                          <Center pb="1.5rem">
+                            <InputGroup maxW="30rem">
+                              <Input
+                                placeholder="search 🔎"
+                                value={searchSafeDapp}
+                                onChange={(e) =>
+                                  setSearchSafeDapp(e.target.value)
+                                }
+                              />
+                              <InputRightElement width="3rem">
+                                <Button
+                                  size="xs"
+                                  variant={"ghost"}
+                                  onClick={() => setSearchSafeDapp("")}
+                                >
+                                  <CloseIcon />
+                                </Button>
+                              </InputRightElement>
+                            </InputGroup>
+                          </Center>
+                        )}
+
+                        <Grid templateColumns="repeat(4, 1fr)" gap={6}>
+                          {filteredSafeDapps &&
+                            filteredSafeDapps.map((dapp, i) => (
+                              <GridItem
+                                key={i}
+                                border="2px solid"
+                                borderColor={"gray.500"}
+                                _hover={{
+                                  cursor: "pointer",
+                                  bgColor: "gray.600",
+                                }}
+                                rounded="lg"
+                                onClick={() => {
+                                  initIFrame(dapp.url);
+                                  setInputAppUrl(dapp.url);
+                                  closeSafeApps();
+                                }}
+                              >
+                                <Center flexDir={"column"} h="100%" p="1rem">
+                                  <Image
+                                    w="2rem"
+                                    src={dapp.iconUrl}
+                                    borderRadius="full"
+                                  />
+                                  <Text mt="0.5rem" textAlign={"center"}>
+                                    {dapp.name}
+                                  </Text>
+                                </Center>
+                              </GridItem>
+                            ))}
+                        </Grid>
+                      </Box>
+                    </Box>
+                  </ModalBody>
+                </ModalContent>
+              </Modal>
             </HStack>
             <Input
               placeholder="https://app.uniswap.org/"
