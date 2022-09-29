@@ -559,7 +559,7 @@ function Body() {
                       <Text>Simulate sending transactions on forked node.</Text>
                       <chakra.hr bg="gray.400" />
                       <ListItem>
-                        Create a fork on Tenderly and grab the id from it's URL.
+                        Create a fork on Tenderly and grab it's id from the URL.
                       </ListItem>
                     </>
                   }
