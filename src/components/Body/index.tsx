@@ -133,6 +133,7 @@ function Body() {
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const tabs = ["WalletConnect", "iFrame", "Extension"];
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
   const [isIFrameLoading, setIsIFrameLoading] = useState(false);
   const [safeDapps, setSafeDapps] = useState<{
@@ -699,265 +700,326 @@ function Body() {
           background="gray.700"
           borderRadius="xl"
         >
-          {["WalletConnect", "iFrame"].map((t, i) => (
+          {tabs.map((t, i) => (
             <Tab
               key={i}
               tabIndex={i}
               selectedTabIndex={selectedTabIndex}
               setSelectedTabIndex={setSelectedTabIndex}
+              isNew={i === 2}
             >
               {t}
             </Tab>
           ))}
         </HStack>
       </Center>
-      {selectedTabIndex === 0 ? (
-        <>
-          <FormControl my={4}>
-            <HStack>
-              <FormLabel>WalletConnect URI</FormLabel>
-              <Tooltip
-                label={
-                  <>
-                    <Text>Visit any dApp and select WalletConnect.</Text>
-                    <Text>
-                      Click "Copy to Clipboard" beneath the QR code, and paste
-                      it here.
-                    </Text>
-                  </>
-                }
-                hasArrow
-                placement="top"
-              >
-                <Box pb="0.8rem">
-                  <InfoIcon />
-                </Box>
-              </Tooltip>
-            </HStack>
-            <Box>
-              <Input
-                placeholder="wc:xyz123"
-                aria-label="uri"
-                autoComplete="off"
-                value={uri}
-                onChange={(e) => setUri(e.target.value)}
-                bg={bgColor[colorMode]}
-                isDisabled={isConnected}
-              />
-            </Box>
-          </FormControl>
-          <Center>
-            <Button onClick={initWalletConnect} isDisabled={isConnected}>
-              Connect
-            </Button>
-          </Center>
-          {loading && (
-            <Center>
-              <VStack>
-                <Box>
-                  <CircularProgress isIndeterminate />
-                </Box>
-                {!isConnected && (
-                  <Box pt={6}>
-                    <Button
-                      onClick={() => {
-                        setLoading(false);
-                        reset();
-                      }}
+      {(() => {
+        switch (selectedTabIndex) {
+          case 0:
+            return (
+              <>
+                <FormControl my={4}>
+                  <HStack>
+                    <FormLabel>WalletConnect URI</FormLabel>
+                    <Tooltip
+                      label={
+                        <>
+                          <Text>Visit any dApp and select WalletConnect.</Text>
+                          <Text>
+                            Click "Copy to Clipboard" beneath the QR code, and
+                            paste it here.
+                          </Text>
+                        </>
+                      }
+                      hasArrow
+                      placement="top"
                     >
-                      Stop Loading ☠
-                    </Button>
-                  </Box>
-                )}
-              </VStack>
-            </Center>
-          )}
-          {peerMeta && (
-            <>
-              <Box mt={4} fontSize={24} fontWeight="semibold">
-                {isConnected ? "✅ Connected To:" : "⚠ Allow to Connect"}
-              </Box>
-              <VStack>
-                <Avatar src={peerMeta.icons[0]} alt={peerMeta.name} />
-                <Text fontWeight="bold">{peerMeta.name}</Text>
-                <Text fontSize="sm">{peerMeta.description}</Text>
-                <Link href={peerMeta.url} textDecor="underline">
-                  {peerMeta.url}
-                </Link>
-                {!isConnected && (
-                  <Box pt={6}>
-                    <Button onClick={approveSession} mr={10}>
-                      Connect ✔
-                    </Button>
-                    <Button onClick={rejectSession}>Reject ❌</Button>
-                  </Box>
-                )}
-                {isConnected && (
-                  <Box pt={6}>
-                    <Button onClick={killSession}>Disconnect ☠</Button>
-                  </Box>
-                )}
-              </VStack>
-            </>
-          )}
-        </>
-      ) : (
-        <>
-          <FormControl my={4}>
-            <HStack>
-              <FormLabel>dapp URL</FormLabel>
-              <Tooltip
-                label={
-                  <>
-                    <Text>Paste the URL of dapp you want to connect to</Text>
-                    <Text>
-                      Note: Some dapps might not support it, so use
-                      WalletConnect in that case
-                    </Text>
-                  </>
-                }
-                hasArrow
-                placement="top"
-              >
-                <Box pb="0.8rem">
-                  <InfoIcon />
-                </Box>
-              </Tooltip>
-              <Spacer />
-              <Box pb="0.5rem">
-                <Button size="sm" onClick={openSafeAapps}>
-                  Supported dapps
-                </Button>
-              </Box>
-              <Modal isOpen={isSafeAppsOpen} onClose={closeSafeApps} isCentered>
-                <ModalOverlay
-                  bg="none"
-                  backdropFilter="auto"
-                  backdropBlur="3px"
-                />
-                <ModalContent
-                  minW={{ base: 0, sm: "30rem", md: "40rem", lg: "60rem" }}
-                >
-                  <ModalHeader>Select a dapp</ModalHeader>
-                  <ModalCloseButton />
-                  <ModalBody maxH="30rem" overflow={"clip"}>
-                    {(!safeDapps || !safeDapps[networkIndex]) && (
-                      <Center py="3rem" w="100%">
-                        <Spinner />
-                      </Center>
-                    )}
-                    <Box pb="2rem" px={{ base: 0, md: "2rem" }}>
-                      {safeDapps && safeDapps[networkIndex] && (
-                        <Center pb="0.5rem">
-                          <InputGroup maxW="30rem">
-                            <Input
-                              placeholder="search 🔎"
-                              value={searchSafeDapp}
-                              onChange={(e) =>
-                                setSearchSafeDapp(e.target.value)
-                              }
-                            />
-                            {searchSafeDapp && (
-                              <InputRightElement width="3rem">
-                                <Button
-                                  size="xs"
-                                  variant={"ghost"}
-                                  onClick={() => setSearchSafeDapp("")}
-                                >
-                                  <CloseIcon />
-                                </Button>
-                              </InputRightElement>
-                            )}
-                          </InputGroup>
-                        </Center>
-                      )}
-                      <Box
-                        minH="30rem"
-                        maxH="30rem"
-                        overflow="scroll"
-                        overflowX="auto"
-                        overflowY="auto"
-                      >
-                        <SimpleGrid
-                          pt="1rem"
-                          columns={{ base: 2, md: 3, lg: 4 }}
-                          gap={6}
-                        >
-                          {filteredSafeDapps &&
-                            filteredSafeDapps.map((dapp, i) => (
-                              <GridItem
-                                key={i}
-                                border="2px solid"
-                                borderColor={"gray.500"}
-                                _hover={{
-                                  cursor: "pointer",
-                                  bgColor: "gray.600",
-                                }}
-                                rounded="lg"
-                                onClick={() => {
-                                  initIFrame(dapp.url);
-                                  setInputAppUrl(dapp.url);
-                                  closeSafeApps();
-                                }}
-                              >
-                                <Center flexDir={"column"} h="100%" p="1rem">
-                                  <Image
-                                    w="2rem"
-                                    src={dapp.iconUrl}
-                                    borderRadius="full"
-                                  />
-                                  <Text mt="0.5rem" textAlign={"center"}>
-                                    {dapp.name}
-                                  </Text>
-                                </Center>
-                              </GridItem>
-                            ))}
-                        </SimpleGrid>
+                      <Box pb="0.8rem">
+                        <InfoIcon />
                       </Box>
+                    </Tooltip>
+                  </HStack>
+                  <Box>
+                    <Input
+                      placeholder="wc:xyz123"
+                      aria-label="uri"
+                      autoComplete="off"
+                      value={uri}
+                      onChange={(e) => setUri(e.target.value)}
+                      bg={bgColor[colorMode]}
+                      isDisabled={isConnected}
+                    />
+                  </Box>
+                </FormControl>
+                <Center>
+                  <Button onClick={initWalletConnect} isDisabled={isConnected}>
+                    Connect
+                  </Button>
+                </Center>
+                {loading && (
+                  <Center>
+                    <VStack>
+                      <Box>
+                        <CircularProgress isIndeterminate />
+                      </Box>
+                      {!isConnected && (
+                        <Box pt={6}>
+                          <Button
+                            onClick={() => {
+                              setLoading(false);
+                              reset();
+                            }}
+                          >
+                            Stop Loading ☠
+                          </Button>
+                        </Box>
+                      )}
+                    </VStack>
+                  </Center>
+                )}
+                {peerMeta && (
+                  <>
+                    <Box mt={4} fontSize={24} fontWeight="semibold">
+                      {isConnected ? "✅ Connected To:" : "⚠ Allow to Connect"}
                     </Box>
-                  </ModalBody>
-                </ModalContent>
-              </Modal>
-            </HStack>
-            <Input
-              placeholder="https://app.uniswap.org/"
-              aria-label="dapp-url"
-              autoComplete="off"
-              value={inputAppUrl}
-              onChange={(e) => setInputAppUrl(e.target.value)}
-              bg={bgColor[colorMode]}
-            />
-          </FormControl>
-          <Center>
-            <Button onClick={() => initIFrame()} isLoading={isIFrameLoading}>
-              Connect
-            </Button>
-          </Center>
-          <Center
-            mt="1rem"
-            ml={{ base: "-385", sm: "-315", md: "-240", lg: "-60" }}
-            px={{ base: "10rem", lg: 0 }}
-            w="70rem"
-          >
-            {appUrl && (
-              <Box
-                as="iframe"
-                w={{ base: "22rem", sm: "45rem", md: "55rem", lg: "1500rem" }}
-                h={{ base: "33rem", md: "35rem", lg: "38rem" }}
-                title="app"
-                src={appUrl}
-                key={iframeKey}
-                borderWidth="1px"
-                borderStyle={"solid"}
-                borderColor="white"
-                bg="white"
-                ref={iframeRef}
-                onLoad={() => setIsIFrameLoading(false)}
-              />
-            )}
-          </Center>
-        </>
-      )}
+                    <VStack>
+                      <Avatar src={peerMeta.icons[0]} alt={peerMeta.name} />
+                      <Text fontWeight="bold">{peerMeta.name}</Text>
+                      <Text fontSize="sm">{peerMeta.description}</Text>
+                      <Link href={peerMeta.url} textDecor="underline">
+                        {peerMeta.url}
+                      </Link>
+                      {!isConnected && (
+                        <Box pt={6}>
+                          <Button onClick={approveSession} mr={10}>
+                            Connect ✔
+                          </Button>
+                          <Button onClick={rejectSession}>Reject ❌</Button>
+                        </Box>
+                      )}
+                      {isConnected && (
+                        <Box pt={6}>
+                          <Button onClick={killSession}>Disconnect ☠</Button>
+                        </Box>
+                      )}
+                    </VStack>
+                  </>
+                )}
+              </>
+            );
+          case 1:
+            return (
+              <>
+                <FormControl my={4}>
+                  <HStack>
+                    <FormLabel>dapp URL</FormLabel>
+                    <Tooltip
+                      label={
+                        <>
+                          <Text>
+                            Paste the URL of dapp you want to connect to
+                          </Text>
+                          <Text>
+                            Note: Some dapps might not support it, so use
+                            WalletConnect in that case
+                          </Text>
+                        </>
+                      }
+                      hasArrow
+                      placement="top"
+                    >
+                      <Box pb="0.8rem">
+                        <InfoIcon />
+                      </Box>
+                    </Tooltip>
+                    <Spacer />
+                    <Box pb="0.5rem">
+                      <Button size="sm" onClick={openSafeAapps}>
+                        Supported dapps
+                      </Button>
+                    </Box>
+                    <Modal
+                      isOpen={isSafeAppsOpen}
+                      onClose={closeSafeApps}
+                      isCentered
+                    >
+                      <ModalOverlay
+                        bg="none"
+                        backdropFilter="auto"
+                        backdropBlur="3px"
+                      />
+                      <ModalContent
+                        minW={{
+                          base: 0,
+                          sm: "30rem",
+                          md: "40rem",
+                          lg: "60rem",
+                        }}
+                      >
+                        <ModalHeader>Select a dapp</ModalHeader>
+                        <ModalCloseButton />
+                        <ModalBody maxH="30rem" overflow={"clip"}>
+                          {(!safeDapps || !safeDapps[networkIndex]) && (
+                            <Center py="3rem" w="100%">
+                              <Spinner />
+                            </Center>
+                          )}
+                          <Box pb="2rem" px={{ base: 0, md: "2rem" }}>
+                            {safeDapps && safeDapps[networkIndex] && (
+                              <Center pb="0.5rem">
+                                <InputGroup maxW="30rem">
+                                  <Input
+                                    placeholder="search 🔎"
+                                    value={searchSafeDapp}
+                                    onChange={(e) =>
+                                      setSearchSafeDapp(e.target.value)
+                                    }
+                                  />
+                                  {searchSafeDapp && (
+                                    <InputRightElement width="3rem">
+                                      <Button
+                                        size="xs"
+                                        variant={"ghost"}
+                                        onClick={() => setSearchSafeDapp("")}
+                                      >
+                                        <CloseIcon />
+                                      </Button>
+                                    </InputRightElement>
+                                  )}
+                                </InputGroup>
+                              </Center>
+                            )}
+                            <Box
+                              minH="30rem"
+                              maxH="30rem"
+                              overflow="scroll"
+                              overflowX="auto"
+                              overflowY="auto"
+                            >
+                              <SimpleGrid
+                                pt="1rem"
+                                columns={{ base: 2, md: 3, lg: 4 }}
+                                gap={6}
+                              >
+                                {filteredSafeDapps &&
+                                  filteredSafeDapps.map((dapp, i) => (
+                                    <GridItem
+                                      key={i}
+                                      border="2px solid"
+                                      borderColor={"gray.500"}
+                                      _hover={{
+                                        cursor: "pointer",
+                                        bgColor: "gray.600",
+                                      }}
+                                      rounded="lg"
+                                      onClick={() => {
+                                        initIFrame(dapp.url);
+                                        setInputAppUrl(dapp.url);
+                                        closeSafeApps();
+                                      }}
+                                    >
+                                      <Center
+                                        flexDir={"column"}
+                                        h="100%"
+                                        p="1rem"
+                                      >
+                                        <Image
+                                          w="2rem"
+                                          src={dapp.iconUrl}
+                                          borderRadius="full"
+                                        />
+                                        <Text mt="0.5rem" textAlign={"center"}>
+                                          {dapp.name}
+                                        </Text>
+                                      </Center>
+                                    </GridItem>
+                                  ))}
+                              </SimpleGrid>
+                            </Box>
+                          </Box>
+                        </ModalBody>
+                      </ModalContent>
+                    </Modal>
+                  </HStack>
+                  <Input
+                    placeholder="https://app.uniswap.org/"
+                    aria-label="dapp-url"
+                    autoComplete="off"
+                    value={inputAppUrl}
+                    onChange={(e) => setInputAppUrl(e.target.value)}
+                    bg={bgColor[colorMode]}
+                  />
+                </FormControl>
+                <Center>
+                  <Button
+                    onClick={() => initIFrame()}
+                    isLoading={isIFrameLoading}
+                  >
+                    Connect
+                  </Button>
+                </Center>
+                <Center
+                  mt="1rem"
+                  ml={{ base: "-385", sm: "-315", md: "-240", lg: "-60" }}
+                  px={{ base: "10rem", lg: 0 }}
+                  w="70rem"
+                >
+                  {appUrl && (
+                    <Box
+                      as="iframe"
+                      w={{
+                        base: "22rem",
+                        sm: "45rem",
+                        md: "55rem",
+                        lg: "1500rem",
+                      }}
+                      h={{ base: "33rem", md: "35rem", lg: "38rem" }}
+                      title="app"
+                      src={appUrl}
+                      key={iframeKey}
+                      borderWidth="1px"
+                      borderStyle={"solid"}
+                      borderColor="white"
+                      bg="white"
+                      ref={iframeRef}
+                      onLoad={() => setIsIFrameLoading(false)}
+                    />
+                  )}
+                </Center>
+              </>
+            );
+          case 2:
+            return (
+              <Center flexDir={"column"} mt="3">
+                <Box w="full" fontWeight={"semibold"} fontSize={"xl"}>
+                  <Text>
+                    ⭐ Download the browser extension from:{" "}
+                    <chakra.a
+                      color="blue.200"
+                      href="https://chrome.google.com/webstore/detail/impersonator/hgihfkmoibhccfdohjdbklmmcknjjmgl"
+                      target={"_blank"}
+                      rel="noopener noreferrer"
+                    >
+                      Chrome Web Store
+                    </chakra.a>
+                  </Text>
+                </Box>
+                <HStack mt="2" w="full" fontSize={"lg"}>
+                  <Text>Read more:</Text>
+                  <Link
+                    color="cyan.200"
+                    fontWeight={"semibold"}
+                    href="https://twitter.com/apoorvlathey/status/1577624123177508864"
+                    isExternal
+                  >
+                    Launch Tweet
+                  </Link>
+                </HStack>
+                <Image mt="2" src="/extension.png" />
+              </Center>
+            );
+        }
+      })()}
       <Center>
         <Box
           minW={["0", "0", "2xl", "2xl"]}
