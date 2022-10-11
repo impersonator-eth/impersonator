@@ -41,7 +41,7 @@ import {
   ModalHeader,
   ModalCloseButton,
   ModalBody,
-  Grid,
+  SimpleGrid,
   GridItem,
   Image,
   Spinner,
@@ -835,7 +835,9 @@ function Body() {
                   backdropFilter="auto"
                   backdropBlur="3px"
                 />
-                <ModalContent minW="60rem">
+                <ModalContent
+                  minW={{ base: 0, sm: "30rem", md: "40rem", lg: "60rem" }}
+                >
                   <ModalHeader>Select a dapp</ModalHeader>
                   <ModalCloseButton />
                   <ModalBody>
@@ -851,7 +853,7 @@ function Body() {
                           <Spinner />
                         </Center>
                       )}
-                      <Box pb="2rem" px="2rem">
+                      <Box pb="2rem" px={{ base: 0, md: "2rem" }}>
                         {safeDapps && safeDapps[networkIndex] && (
                           <Center pb="1.5rem">
                             <InputGroup maxW="30rem">
@@ -862,20 +864,22 @@ function Body() {
                                   setSearchSafeDapp(e.target.value)
                                 }
                               />
-                              <InputRightElement width="3rem">
-                                <Button
-                                  size="xs"
-                                  variant={"ghost"}
-                                  onClick={() => setSearchSafeDapp("")}
-                                >
-                                  <CloseIcon />
-                                </Button>
-                              </InputRightElement>
+                              {searchSafeDapp && (
+                                <InputRightElement width="3rem">
+                                  <Button
+                                    size="xs"
+                                    variant={"ghost"}
+                                    onClick={() => setSearchSafeDapp("")}
+                                  >
+                                    <CloseIcon />
+                                  </Button>
+                                </InputRightElement>
+                              )}
                             </InputGroup>
                           </Center>
                         )}
 
-                        <Grid templateColumns="repeat(4, 1fr)" gap={6}>
+                        <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} gap={6}>
                           {filteredSafeDapps &&
                             filteredSafeDapps.map((dapp, i) => (
                               <GridItem
@@ -905,7 +909,7 @@ function Body() {
                                 </Center>
                               </GridItem>
                             ))}
-                        </Grid>
+                        </SimpleGrid>
                       </Box>
                     </Box>
                   </ModalBody>
