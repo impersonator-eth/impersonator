@@ -840,46 +840,49 @@ function Body() {
                 >
                   <ModalHeader>Select a dapp</ModalHeader>
                   <ModalCloseButton />
-                  <ModalBody>
-                    <Box
-                      minH="30rem"
-                      maxH="30rem"
-                      overflow="scroll"
-                      overflowX="auto"
-                      overflowY="auto"
-                    >
-                      {(!safeDapps || !safeDapps[networkIndex]) && (
-                        <Center py="3rem" w="100%">
-                          <Spinner />
+                  <ModalBody maxH="30rem" overflow={"clip"}>
+                    {(!safeDapps || !safeDapps[networkIndex]) && (
+                      <Center py="3rem" w="100%">
+                        <Spinner />
+                      </Center>
+                    )}
+                    <Box pb="2rem" px={{ base: 0, md: "2rem" }}>
+                      {safeDapps && safeDapps[networkIndex] && (
+                        <Center pb="0.5rem">
+                          <InputGroup maxW="30rem">
+                            <Input
+                              placeholder="search 🔎"
+                              value={searchSafeDapp}
+                              onChange={(e) =>
+                                setSearchSafeDapp(e.target.value)
+                              }
+                            />
+                            {searchSafeDapp && (
+                              <InputRightElement width="3rem">
+                                <Button
+                                  size="xs"
+                                  variant={"ghost"}
+                                  onClick={() => setSearchSafeDapp("")}
+                                >
+                                  <CloseIcon />
+                                </Button>
+                              </InputRightElement>
+                            )}
+                          </InputGroup>
                         </Center>
                       )}
-                      <Box pb="2rem" px={{ base: 0, md: "2rem" }}>
-                        {safeDapps && safeDapps[networkIndex] && (
-                          <Center pb="1.5rem">
-                            <InputGroup maxW="30rem">
-                              <Input
-                                placeholder="search 🔎"
-                                value={searchSafeDapp}
-                                onChange={(e) =>
-                                  setSearchSafeDapp(e.target.value)
-                                }
-                              />
-                              {searchSafeDapp && (
-                                <InputRightElement width="3rem">
-                                  <Button
-                                    size="xs"
-                                    variant={"ghost"}
-                                    onClick={() => setSearchSafeDapp("")}
-                                  >
-                                    <CloseIcon />
-                                  </Button>
-                                </InputRightElement>
-                              )}
-                            </InputGroup>
-                          </Center>
-                        )}
-
-                        <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} gap={6}>
+                      <Box
+                        minH="30rem"
+                        maxH="30rem"
+                        overflow="scroll"
+                        overflowX="auto"
+                        overflowY="auto"
+                      >
+                        <SimpleGrid
+                          pt="1rem"
+                          columns={{ base: 2, md: 3, lg: 4 }}
+                          gap={6}
+                        >
                           {filteredSafeDapps &&
                             filteredSafeDapps.map((dapp, i) => (
                               <GridItem
@@ -930,18 +933,24 @@ function Body() {
               Connect
             </Button>
           </Center>
-          <Center mt="1rem" ml="-60" w="70rem">
+          <Center
+            mt="1rem"
+            ml={{ base: "-385", sm: "-315", md: "-240", lg: "-60" }}
+            px={{ base: "10rem", lg: 0 }}
+            w="70rem"
+          >
             {appUrl && (
-              <iframe
+              <Box
+                as="iframe"
+                w={{ base: "22rem", sm: "45rem", md: "55rem", lg: "1500rem" }}
+                h={{ base: "33rem", md: "35rem", lg: "38rem" }}
                 title="app"
                 src={appUrl}
                 key={iframeKey}
-                width="1500rem"
-                height="600rem"
-                style={{
-                  border: "1px solid white",
-                  background: "white",
-                }}
+                borderWidth="1px"
+                borderStyle={"solid"}
+                borderColor="white"
+                bg="white"
                 ref={iframeRef}
                 onLoad={() => setIsIFrameLoading(false)}
               />

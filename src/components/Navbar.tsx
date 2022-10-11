@@ -23,7 +23,11 @@ function Navbar() {
       borderBottomColor={underlineColor[colorMode]}
     >
       <Spacer flex="1" />
-      <Heading maxW={["302px", "4xl", "4xl", "4xl"]}>
+      <Heading
+        maxW={["302px", "4xl", "4xl", "4xl"]}
+        fontSize={{ base: "2xl", md: "3xl" }}
+        pr="2rem"
+      >
         🎭 Impersonator 🕵️
       </Heading>
       <Flex flex="1" justifyContent="flex-end" alignItems={"center"}>
