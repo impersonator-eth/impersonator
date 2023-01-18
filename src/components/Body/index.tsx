@@ -104,6 +104,19 @@ function Body() {
   const addressFromURL = new URLSearchParams(window.location.search).get(
     "address"
   );
+  const urlFromURL = new URLSearchParams(window.location.search).get("url");
+  const chainFromURL = new URLSearchParams(window.location.search).get("chain");
+  let networkIndexViaURL = 0;
+  if (chainFromURL) {
+    for (let i = 0; i < networkInfo.length; i++) {
+      if (
+        networkInfo[i].name.toLowerCase().includes(chainFromURL.toLowerCase())
+      ) {
+        networkIndexViaURL = i;
+        break;
+      }
+    }
+  }
   const toast = useToast();
   const { onOpen, onClose, isOpen } = useDisclosure();
   const { isOpen: tableIsOpen, onToggle: tableOnToggle } = useDisclosure();
@@ -127,21 +140,23 @@ function Body() {
   const [address, setAddress] = useState(addressFromURL ?? ""); // internal resolved address
   const [isAddressValid, setIsAddressValid] = useState(true);
   const [uri, setUri] = useState("");
-  const [networkIndex, setNetworkIndex] = useState(0);
+  const [networkIndex, setNetworkIndex] = useState(networkIndexViaURL);
   const [connector, setConnector] = useState<WalletConnect>();
   const [peerMeta, setPeerMeta] = useState<IClientMeta>();
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const tabs = ["WalletConnect", "iFrame", "Extension"];
-  const [selectedTabIndex, setSelectedTabIndex] = useState(0);
+  const [selectedTabIndex, setSelectedTabIndex] = useState(urlFromURL ? 1 : 0);
   const [isIFrameLoading, setIsIFrameLoading] = useState(false);
   const [safeDapps, setSafeDapps] = useState<{
     [networkIndex: number]: SafeDappInfo[];
   }>({});
   const [searchSafeDapp, setSearchSafeDapp] = useState<string>();
   const [filteredSafeDapps, setFilteredSafeDapps] = useState<SafeDappInfo[]>();
-  const [inputAppUrl, setInputAppUrl] = useState<string>();
+  const [inputAppUrl, setInputAppUrl] = useState<string | undefined>(
+    urlFromURL ?? undefined
+  );
   const [iframeKey, setIframeKey] = useState(0); // hacky way to reload iframe when key changes
 
   const [tenderlyForkId, setTenderlyForkId] = useState("");
@@ -194,6 +209,12 @@ function Body() {
     const storedTenderlyForkId = localStorage.getItem("tenderlyForkId");
     setTenderlyForkId(storedTenderlyForkId ? storedTenderlyForkId : "");
   }, []);
+
+  useEffect(() => {
+    if (provider && addressFromURL && urlFromURL) {
+      initIFrame();
+    }
+  }, [provider]);
 
   useEffect(() => {
     if (connector) {
