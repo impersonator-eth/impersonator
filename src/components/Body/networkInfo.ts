@@ -44,21 +44,6 @@ const networkInfo: {
     rpc: "https://rpc.ankr.com/gnosis",
   },
   {
-    chainID: 42,
-    name: "Kovan Testnet",
-    rpc: `https://kovan.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
-  },
-  {
-    chainID: 3,
-    name: "Ropsten Testnet",
-    rpc: `https://ropsten.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
-  },
-  {
-    chainID: 4,
-    name: "Rinkeby Testnet",
-    rpc: `https://rinkeby.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
-  },
-  {
     chainID: 5,
     name: "Goerli Testnet",
     rpc: `https://goerli.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
