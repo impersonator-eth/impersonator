@@ -13,7 +13,6 @@ import {
   Text,
   Link,
   VStack,
-  Select,
   useToast,
   CircularProgress,
   Center,
@@ -60,9 +59,9 @@ import WalletConnect from "@walletconnect/client";
 import { IClientMeta } from "@walletconnect/types";
 import { ethers } from "ethers";
 import axios from "axios";
+import networksList from "evm-rpcs-list";
 import { useSafeInject } from "../../contexts/SafeInjectContext";
 import Tab from "./Tab";
-import networkInfo from "./networkInfo";
 
 interface SafeDappInfo {
   id: number;
@@ -75,6 +74,35 @@ interface SelectedNetworkOption {
   label: string;
   value: number;
 }
+
+const primaryNetworkIds = [
+  1, // ETH Mainnet
+  42161, // Arbitrum One
+  43114, // Avalanche
+  56, // BSC
+  250, // Fantom Opera
+  5, // Goerli Testnet
+  100, // Gnosis
+  10, // Optimism
+  137, // Polygon
+];
+
+const primaryNetworkOptions = primaryNetworkIds.map((id) => {
+  return { chainId: id, ...networksList[id.toString()] };
+});
+const secondaryNetworkOptions = Object.entries(networksList)
+  .filter((id) => !primaryNetworkIds.includes(parseInt(id[0])))
+  .map((arr) => {
+    return {
+      chainId: parseInt(arr[0]),
+      name: arr[1].name,
+      rpcs: arr[1].rpcs,
+    };
+  });
+const allNetworksOptions = [
+  ...primaryNetworkOptions,
+  ...secondaryNetworkOptions,
+];
 
 const slicedText = (txt: string) => {
   return txt.length > 6
@@ -112,13 +140,15 @@ function Body() {
   );
   const urlFromURL = new URLSearchParams(window.location.search).get("url");
   const chainFromURL = new URLSearchParams(window.location.search).get("chain");
-  let networkIndexViaURL = 0;
+  let networkIdViaURL = 1;
   if (chainFromURL) {
-    for (let i = 0; i < networkInfo.length; i++) {
+    for (let i = 0; i < allNetworksOptions.length; i++) {
       if (
-        networkInfo[i].name.toLowerCase().includes(chainFromURL.toLowerCase())
+        allNetworksOptions[i].name
+          .toLowerCase()
+          .includes(chainFromURL.toLowerCase())
       ) {
-        networkIndexViaURL = i;
+        networkIdViaURL = allNetworksOptions[i].chainId;
         break;
       }
     }
@@ -146,12 +176,12 @@ function Body() {
   const [address, setAddress] = useState(addressFromURL ?? ""); // internal resolved address
   const [isAddressValid, setIsAddressValid] = useState(true);
   const [uri, setUri] = useState("");
-  const [networkIndex, setNetworkIndex] = useState(networkIndexViaURL);
+  const [networkId, setNetworkId] = useState(networkIdViaURL);
   const [selectedNetworkOption, setSelectedNetworkOption] = useState<
     SingleValue<SelectedNetworkOption>
   >({
-    label: networkInfo[networkIndexViaURL].name,
-    value: networkIndexViaURL,
+    label: networksList[networkIdViaURL].name,
+    value: networkIdViaURL,
   });
   const [connector, setConnector] = useState<WalletConnect>();
   const [peerMeta, setPeerMeta] = useState<IClientMeta>();
@@ -162,7 +192,7 @@ function Body() {
   const [selectedTabIndex, setSelectedTabIndex] = useState(urlFromURL ? 1 : 0);
   const [isIFrameLoading, setIsIFrameLoading] = useState(false);
   const [safeDapps, setSafeDapps] = useState<{
-    [networkIndex: number]: SafeDappInfo[];
+    [networkId: number]: SafeDappInfo[];
   }>({});
   const [searchSafeDapp, setSearchSafeDapp] = useState<string>();
   const [filteredSafeDapps, setFilteredSafeDapps] = useState<SafeDappInfo[]>();
@@ -199,12 +229,7 @@ function Body() {
             (_connector.chainId as unknown as { chainID: number }).chainID ||
             _connector.chainId;
 
-          for (let i = 0; i < networkInfo.length; i++) {
-            if (getChainId(i) === chainId) {
-              setNetworkIndex(i);
-              break;
-            }
-          }
+          setNetworkId(chainId);
         } catch {
           console.log("Corrupt old session. Starting fresh");
           localStorage.removeItem("walletconnect");
@@ -252,8 +277,9 @@ function Body() {
   }, [address]);
 
   useEffect(() => {
-    setRpcUrl(networkInfo[networkIndex].rpc);
-  }, [networkIndex]);
+    // TODO: use random rpc if this one is slow/down?
+    setRpcUrl(networksList[networkId].rpcs[0]);
+  }, [networkId]);
 
   useEffect(() => {
     if (latestTransaction) {
@@ -294,25 +320,25 @@ function Body() {
   }, [latestTransaction, tenderlyForkId]);
 
   useEffect(() => {
-    const fetchSafeDapps = async (networkIndex: number) => {
+    const fetchSafeDapps = async (networkId: number) => {
       const response = await axios.get<SafeDappInfo[]>(
-        `https://safe-client.gnosis.io/v1/chains/${networkInfo[networkIndex].chainID}/safe-apps`
+        `https://safe-client.gnosis.io/v1/chains/${networkId}/safe-apps`
       );
       setSafeDapps((dapps) => ({
         ...dapps,
-        [networkIndex]: response.data.filter((d) => ![29, 11].includes(d.id)), // Filter out Transaction Builder and WalletConnect
+        [networkId]: response.data.filter((d) => ![29, 11].includes(d.id)), // Filter out Transaction Builder and WalletConnect
       }));
     };
 
-    if (isSafeAppsOpen && !safeDapps[networkIndex]) {
-      fetchSafeDapps(networkIndex);
+    if (isSafeAppsOpen && !safeDapps[networkId]) {
+      fetchSafeDapps(networkId);
     }
-  }, [isSafeAppsOpen, safeDapps, networkIndex]);
+  }, [isSafeAppsOpen, safeDapps, networkId]);
 
   useEffect(() => {
-    if (safeDapps[networkIndex]) {
+    if (safeDapps[networkId]) {
       setFilteredSafeDapps(
-        safeDapps[networkIndex].filter((dapp) => {
+        safeDapps[networkId].filter((dapp) => {
           if (!searchSafeDapp) return true;
 
           return (
@@ -328,7 +354,7 @@ function Body() {
     } else {
       setFilteredSafeDapps(undefined);
     }
-  }, [safeDapps, networkIndex, searchSafeDapp]);
+  }, [safeDapps, networkId, searchSafeDapp]);
 
   const resolveAndValidateAddress = async () => {
     let isValid;
@@ -361,10 +387,6 @@ function Body() {
     }
 
     return { isValid, _address: _address };
-  };
-
-  const getChainId = (networkIndex: number) => {
-    return networkInfo[networkIndex].chainID;
   };
 
   const getCachedSession = () => {
@@ -540,7 +562,7 @@ function Body() {
   const approveSession = () => {
     console.log("ACTION", "approveSession");
     if (connector) {
-      let chainId = getChainId(networkIndex);
+      let chainId = networkId;
       if (!chainId) {
         chainId = 1; // default to ETH Mainnet if no network selected
       }
@@ -564,7 +586,7 @@ function Body() {
     newChainId?: number;
     newAddress?: string;
   }) => {
-    let _chainId = newChainId || getChainId(networkIndex);
+    let _chainId = newChainId || networkId;
     let _address = newAddress || address;
 
     if (connector && connector.connected) {
@@ -598,12 +620,12 @@ function Body() {
     }
   };
 
-  const updateNetwork = (_networkIndex: number) => {
-    setNetworkIndex(_networkIndex);
+  const updateNetwork = (_networkId: number) => {
+    setNetworkId(_networkId);
 
     if (selectedTabIndex === 0) {
       updateSession({
-        newChainId: getChainId(_networkIndex),
+        newChainId: _networkId,
       });
     } else {
       setIframeKey((key) => key + 1);
@@ -714,15 +736,34 @@ function Body() {
       </FormControl>
       <Box mt={4} cursor="pointer">
         <RSelect
-          options={networkInfo.map((network, i) => ({
-            label: network.name,
-            value: i,
-          }))}
+          options={[
+            {
+              label: "",
+              options: primaryNetworkOptions.map((network) => ({
+                label: network.name,
+                value: network.chainId,
+              })),
+            },
+            {
+              label: "",
+              options: secondaryNetworkOptions.map((network) => ({
+                label: network.name,
+                value: network.chainId,
+              })),
+            },
+          ]}
           value={selectedNetworkOption}
           onChange={setSelectedNetworkOption}
-          size="md"
           placeholder="Select chain..."
+          size="md"
           tagVariant="solid"
+          chakraStyles={{
+            groupHeading: (provided, state) => ({
+              ...provided,
+              h: "1px",
+              borderTop: "1px solid white",
+            }),
+          }}
           closeMenuOnSelect
           useBasicStyles
         />
@@ -895,13 +936,13 @@ function Body() {
                         <ModalHeader>Select a dapp</ModalHeader>
                         <ModalCloseButton />
                         <ModalBody maxH="30rem" overflow={"clip"}>
-                          {(!safeDapps || !safeDapps[networkIndex]) && (
+                          {(!safeDapps || !safeDapps[networkId]) && (
                             <Center py="3rem" w="100%">
                               <Spinner />
                             </Center>
                           )}
                           <Box pb="2rem" px={{ base: 0, md: "2rem" }}>
-                            {safeDapps && safeDapps[networkIndex] && (
+                            {safeDapps && safeDapps[networkId] && (
                               <Center pb="0.5rem">
                                 <InputGroup maxW="30rem">
                                   <Input
