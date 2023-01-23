@@ -20,6 +20,7 @@
     "@types/react-dom": "^17.0.11",
     "@walletconnect/client": "^1.6.2",
     "axios": "^0.24.0",
+    "chakra-react-select": "^4.4.3",
     "ethereum-checksum-address": "^0.0.6",
     "ethers": "^5.4.5",
     "framer-motion": "^4",

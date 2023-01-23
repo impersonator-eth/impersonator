@@ -55,6 +55,7 @@ import {
   DeleteIcon,
   CloseIcon,
 } from "@chakra-ui/icons";
+import { Select as RSelect, SingleValue } from "chakra-react-select";
 import WalletConnect from "@walletconnect/client";
 import { IClientMeta } from "@walletconnect/types";
 import { ethers } from "ethers";
@@ -68,6 +69,11 @@ interface SafeDappInfo {
   url: string;
   name: string;
   iconUrl: string;
+}
+
+interface SelectedNetworkOption {
+  label: string;
+  value: number;
 }
 
 const slicedText = (txt: string) => {
@@ -141,6 +147,12 @@ function Body() {
   const [isAddressValid, setIsAddressValid] = useState(true);
   const [uri, setUri] = useState("");
   const [networkIndex, setNetworkIndex] = useState(networkIndexViaURL);
+  const [selectedNetworkOption, setSelectedNetworkOption] = useState<
+    SingleValue<SelectedNetworkOption>
+  >({
+    label: networkInfo[networkIndexViaURL].name,
+    value: networkIndexViaURL,
+  });
   const [connector, setConnector] = useState<WalletConnect>();
   const [peerMeta, setPeerMeta] = useState<IClientMeta>();
   const [isConnected, setIsConnected] = useState(false);
@@ -209,6 +221,10 @@ function Body() {
     const storedTenderlyForkId = localStorage.getItem("tenderlyForkId");
     setTenderlyForkId(storedTenderlyForkId ? storedTenderlyForkId : "");
   }, []);
+
+  useEffect(() => {
+    updateNetwork((selectedNetworkOption as SelectedNetworkOption).value);
+  }, [selectedNetworkOption]);
 
   useEffect(() => {
     if (provider && addressFromURL && urlFromURL) {
@@ -696,22 +712,21 @@ function Body() {
           )}
         </InputGroup>
       </FormControl>
-      <Select
-        mt={4}
-        variant="filled"
-        _hover={{ cursor: "pointer" }}
-        value={networkIndex}
-        onChange={(e) => {
-          const _networkIndex = parseInt(e.target.value);
-          updateNetwork(_networkIndex);
-        }}
-      >
-        {networkInfo.map((network, i) => (
-          <option value={i} key={i}>
-            {network.name}
-          </option>
-        ))}
-      </Select>
+      <Box mt={4} cursor="pointer">
+        <RSelect
+          options={networkInfo.map((network, i) => ({
+            label: network.name,
+            value: i,
+          }))}
+          value={selectedNetworkOption}
+          onChange={setSelectedNetworkOption}
+          size="md"
+          placeholder="Select chain..."
+          tagVariant="solid"
+          closeMenuOnSelect
+          useBasicStyles
+        />
+      </Box>
       <Center flexDir="column">
         <HStack
           mt="1rem"
