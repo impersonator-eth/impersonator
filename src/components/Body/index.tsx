@@ -55,8 +55,12 @@ import {
   CloseIcon,
 } from "@chakra-ui/icons";
 import { Select as RSelect, SingleValue } from "chakra-react-select";
-import WalletConnect from "@walletconnect/client";
+// WC v1
+import LegacySignClient from "@walletconnect/client";
 import { IClientMeta } from "@walletconnect/types";
+// WC v2
+import SignClient from "@walletconnect/sign-client";
+import { parseUri } from "@walletconnect/utils";
 import { ethers } from "ethers";
 import axios from "axios";
 import networksList from "evm-rpcs-list";
@@ -183,7 +187,10 @@ function Body() {
     label: networksList[networkIdViaURL].name,
     value: networkIdViaURL,
   });
-  const [connector, setConnector] = useState<WalletConnect>();
+  // WC v1
+  const [legacySignClient, setLegacySignClient] = useState<LegacySignClient>();
+  // WC v2
+  const [signClient, setSignClient] = useState<SignClient>();
   const [peerMeta, setPeerMeta] = useState<IClientMeta>();
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -215,19 +222,21 @@ function Body() {
   useEffect(() => {
     const { session, _showAddress } = getCachedSession();
     if (session) {
-      let _connector = new WalletConnect({ session });
+      let _legacySignClient = new LegacySignClient({ session });
 
-      if (_connector.peerMeta) {
+      if (_legacySignClient.peerMeta) {
         try {
-          setConnector(_connector);
-          setShowAddress(_showAddress ? _showAddress : _connector.accounts[0]);
-          setAddress(_connector.accounts[0]);
-          setUri(_connector.uri);
-          setPeerMeta(_connector.peerMeta);
+          setLegacySignClient(_legacySignClient);
+          setShowAddress(
+            _showAddress ? _showAddress : _legacySignClient.accounts[0]
+          );
+          setAddress(_legacySignClient.accounts[0]);
+          setUri(_legacySignClient.uri);
+          setPeerMeta(_legacySignClient.peerMeta);
           setIsConnected(true);
           const chainId =
-            (_connector.chainId as unknown as { chainID: number }).chainID ||
-            _connector.chainId;
+            (_legacySignClient.chainId as unknown as { chainID: number })
+              .chainID || _legacySignClient.chainId;
 
           setNetworkId(chainId);
         } catch {
@@ -258,11 +267,11 @@ function Body() {
   }, [provider]);
 
   useEffect(() => {
-    if (connector) {
+    if (legacySignClient) {
       subscribeToEvents();
     }
     // eslint-disable-next-line
-  }, [connector]);
+  }, [legacySignClient]);
 
   useEffect(() => {
     localStorage.setItem("tenderlyForkId", tenderlyForkId);
@@ -411,15 +420,20 @@ function Body() {
     const { isValid } = await resolveAndValidateAddress();
 
     if (isValid) {
+      const { version } = parseUri(uri);
+
       try {
-        let _connector = new WalletConnect({ uri });
+        if (version === 1) {
+          let _legacySignClient = new LegacySignClient({ uri });
 
-        if (!_connector.connected) {
-          await _connector.createSession();
+          if (!_legacySignClient.connected) {
+            await _legacySignClient.createSession();
+          }
+
+          setLegacySignClient(_legacySignClient);
+          setUri(_legacySignClient.uri);
+        } else {
         }
-
-        setConnector(_connector);
-        setUri(_connector.uri);
       } catch (err) {
         console.error(err);
         toast({
@@ -455,8 +469,8 @@ function Body() {
   const subscribeToEvents = () => {
     console.log("ACTION", "subscribeToEvents");
 
-    if (connector) {
-      connector.on("session_request", (error, payload) => {
+    if (legacySignClient) {
+      legacySignClient.on("session_request", (error, payload) => {
         if (loading) {
           setLoading(false);
         }
@@ -470,7 +484,7 @@ function Body() {
         setPeerMeta(payload.params[0].peerMeta);
       });
 
-      connector.on("session_update", (error) => {
+      legacySignClient.on("session_update", (error) => {
         console.log("EVENT", "session_update");
         setLoading(false);
 
@@ -479,7 +493,7 @@ function Body() {
         }
       });
 
-      connector.on("call_request", async (error, payload) => {
+      legacySignClient.on("call_request", async (error, payload) => {
         console.log({ payload });
 
         if (payload.method === "eth_sendTransaction") {
@@ -514,7 +528,7 @@ function Body() {
             console.log({ res });
 
             // Approve Call Request
-            connector.approveRequest({
+            legacySignClient.approveRequest({
               id: res.id,
               result: res.result,
             });
@@ -537,7 +551,7 @@ function Body() {
         // await getAppConfig().rpcEngine.router(payload, this.state, this.bindedSetState);
       });
 
-      connector.on("connect", (error, payload) => {
+      legacySignClient.on("connect", (error, payload) => {
         console.log("EVENT", "connect");
 
         if (error) {
@@ -547,7 +561,7 @@ function Body() {
         // this.setState({ connected: true });
       });
 
-      connector.on("disconnect", (error, payload) => {
+      legacySignClient.on("disconnect", (error, payload) => {
         console.log("EVENT", "disconnect");
 
         if (error) {
@@ -561,20 +575,20 @@ function Body() {
 
   const approveSession = () => {
     console.log("ACTION", "approveSession");
-    if (connector) {
+    if (legacySignClient) {
       let chainId = networkId;
       if (!chainId) {
         chainId = 1; // default to ETH Mainnet if no network selected
       }
-      connector.approveSession({ chainId, accounts: [address] });
+      legacySignClient.approveSession({ chainId, accounts: [address] });
       setIsConnected(true);
     }
   };
 
   const rejectSession = () => {
     console.log("ACTION", "rejectSession");
-    if (connector) {
-      connector.rejectSession();
+    if (legacySignClient) {
+      legacySignClient.rejectSession();
       setPeerMeta(undefined);
     }
   };
@@ -589,8 +603,8 @@ function Body() {
     let _chainId = newChainId || networkId;
     let _address = newAddress || address;
 
-    if (connector && connector.connected) {
-      connector.updateSession({
+    if (legacySignClient && legacySignClient.connected) {
+      legacySignClient.updateSession({
         chainId: _chainId,
         accounts: [_address],
       });
@@ -635,8 +649,8 @@ function Body() {
   const killSession = () => {
     console.log("ACTION", "killSession");
 
-    if (connector) {
-      connector.killSession();
+    if (legacySignClient) {
+      legacySignClient.killSession();
 
       setPeerMeta(undefined);
       setIsConnected(false);
