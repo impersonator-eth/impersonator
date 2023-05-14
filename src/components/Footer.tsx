@@ -40,7 +40,7 @@ function Footer() {
                 <>
                   <Text>Support it on</Text>
                   <Link
-                    href="https://gitcoin.co/grants/3613/impersonator"
+                    href={process.env.REACT_APP_GITCOIN_GRANTS_LINK}
                     isExternal
                   >
                     <HStack fontWeight="bold" textDecor="underline">
