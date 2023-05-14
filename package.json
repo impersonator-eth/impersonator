@@ -8,9 +8,9 @@
     "@chakra-ui/react": "^1.6.5",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
-    "@fortawesome/fontawesome-svg-core": "^1.2.36",
-    "@fortawesome/free-brands-svg-icons": "^5.15.4",
-    "@fortawesome/react-fontawesome": "^0.1.15",
+    "@fortawesome/fontawesome-svg-core": "^6.4.0",
+    "@fortawesome/free-brands-svg-icons": "^6.4.0",
+    "@fortawesome/react-fontawesome": "^0.1.18",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
@@ -50,7 +50,7 @@
     ]
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=16.0.0 <17.0.0"
   },
   "engineStrict": true,
   "browserslist": [

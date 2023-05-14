@@ -1072,10 +1072,7 @@ function Body() {
                       ✅ Connected To:
                     </Box>
                     <VStack>
-                      <Avatar
-                        src={legacyPeerMeta.icons[0]}
-                        alt={legacyPeerMeta.name}
-                      />
+                      <Avatar src={legacyPeerMeta.icons[0]} />
                       <Text fontWeight="bold">{legacyPeerMeta.name}</Text>
                       <Text fontSize="sm">{legacyPeerMeta.description}</Text>
                       <Link href={legacyPeerMeta.url} textDecor="underline">
@@ -1097,7 +1094,6 @@ function Body() {
                     <VStack>
                       <Avatar
                         src={web3WalletSession.peer?.metadata?.icons[0]}
-                        alt={web3WalletSession.peer?.metadata?.name}
                       />
                       <Text fontWeight="bold">
                         {web3WalletSession.peer?.metadata?.name}
