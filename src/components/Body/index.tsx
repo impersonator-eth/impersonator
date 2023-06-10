@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Container,
   InputGroup,
@@ -44,6 +44,7 @@ import {
   GridItem,
   Image,
   Spinner,
+  List,
 } from "@chakra-ui/react";
 import {
   SettingsIcon,
@@ -895,9 +896,12 @@ function Body() {
                     <>
                       <Text>Simulate sending transactions on forked node.</Text>
                       <chakra.hr bg="gray.400" />
-                      <ListItem>
-                        Create a fork on Tenderly and grab it's id from the URL.
-                      </ListItem>
+                      <List>
+                        <ListItem>
+                          Create a fork on Tenderly and grab it's id from the
+                          URL.
+                        </ListItem>
+                      </List>
                     </>
                   }
                   hasArrow
