@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   FormControl,
   HStack,
@@ -14,9 +15,25 @@ interface URIInputParams {
   setUri: (value: string) => void;
   bg: string;
   isConnected: boolean;
+  initWalletConnect: () => void;
 }
 
-function URIInput({ uri, setUri, bg, isConnected }: URIInputParams) {
+function URIInput({
+  uri,
+  setUri,
+  bg,
+  isConnected,
+  initWalletConnect,
+}: URIInputParams) {
+  const [pasted, setPasted] = useState(false);
+
+  useEffect(() => {
+    if (pasted) {
+      initWalletConnect();
+      setPasted(false);
+    }
+  }, [uri]);
+
   return (
     <FormControl my={4}>
       <HStack>
@@ -46,6 +63,11 @@ function URIInput({ uri, setUri, bg, isConnected }: URIInputParams) {
           autoComplete="off"
           value={uri}
           onChange={(e) => setUri(e.target.value)}
+          onPaste={(e) => {
+            e.preventDefault();
+            setPasted(true);
+            setUri(e.clipboardData.getData("text"));
+          }}
           bg={bg}
           isDisabled={isConnected}
         />

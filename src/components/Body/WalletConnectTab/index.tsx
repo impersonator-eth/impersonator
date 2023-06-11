@@ -35,9 +35,15 @@ function WalletConnectTab({
 }: WalletConnectTabParams) {
   return (
     <>
-      <URIInput uri={uri} setUri={setUri} bg={bg} isConnected={isConnected} />
+      <URIInput
+        uri={uri}
+        setUri={setUri}
+        bg={bg}
+        isConnected={isConnected}
+        initWalletConnect={initWalletConnect}
+      />
       <Center>
-        <Button onClick={initWalletConnect} isDisabled={isConnected}>
+        <Button onClick={() => initWalletConnect()} isDisabled={isConnected}>
           Connect
         </Button>
       </Center>
