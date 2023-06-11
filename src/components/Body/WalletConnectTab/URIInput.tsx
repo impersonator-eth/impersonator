@@ -7,8 +7,11 @@ import {
   Box,
   Text,
   Input,
+  InputGroup,
+  InputRightElement,
+  Button,
 } from "@chakra-ui/react";
-import { InfoIcon } from "@chakra-ui/icons";
+import { InfoIcon, DeleteIcon } from "@chakra-ui/icons";
 
 interface URIInputParams {
   uri: string;
@@ -57,20 +60,30 @@ function URIInput({
         </Tooltip>
       </HStack>
       <Box>
-        <Input
-          placeholder="wc:xyz123"
-          aria-label="uri"
-          autoComplete="off"
-          value={uri}
-          onChange={(e) => setUri(e.target.value)}
-          onPaste={(e) => {
-            e.preventDefault();
-            setPasted(true);
-            setUri(e.clipboardData.getData("text"));
-          }}
-          bg={bg}
-          isDisabled={isConnected}
-        />
+        <InputGroup>
+          <Input
+            pr={isConnected ? "0" : "3.5rem"}
+            placeholder="wc:xyz123"
+            aria-label="uri"
+            autoComplete="off"
+            value={uri}
+            onChange={(e) => setUri(e.target.value)}
+            onPaste={(e) => {
+              e.preventDefault();
+              setPasted(true);
+              setUri(e.clipboardData.getData("text"));
+            }}
+            bg={bg}
+            isDisabled={isConnected}
+          />
+          {uri && !isConnected && (
+            <InputRightElement px="1rem" mr="0.5rem">
+              <Button h="1.75rem" size="sm" onClick={() => setUri("")}>
+                <DeleteIcon />
+              </Button>
+            </InputRightElement>
+          )}
+        </InputGroup>
       </Box>
     </FormControl>
   );

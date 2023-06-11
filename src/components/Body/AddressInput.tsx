@@ -6,6 +6,7 @@ import {
   InputRightElement,
   Button,
 } from "@chakra-ui/react";
+import { DeleteIcon } from "@chakra-ui/icons";
 
 interface AddressInputParams {
   showAddress: string;
@@ -51,13 +52,28 @@ function AddressInput({
           bg={bg}
           isInvalid={!isAddressValid}
         />
-        {((selectedTabIndex === 0 && isConnected) ||
-          (selectedTabIndex === 1 && appUrl && !isIFrameLoading)) && (
+        {(selectedTabIndex === 0 && isConnected) ||
+        (selectedTabIndex === 1 && appUrl && !isIFrameLoading) ? (
           <InputRightElement width="4.5rem" mr="1rem">
             <Button h="1.75rem" size="sm" onClick={updateAddress}>
               Update
             </Button>
           </InputRightElement>
+        ) : (
+          showAddress && (
+            <InputRightElement px="1rem" mr="0.5rem">
+              <Button
+                h="1.75rem"
+                size="sm"
+                onClick={() => {
+                  setShowAddress("");
+                  setAddress("");
+                }}
+              >
+                <DeleteIcon />
+              </Button>
+            </InputRightElement>
+          )
         )}
       </InputGroup>
     </FormControl>
