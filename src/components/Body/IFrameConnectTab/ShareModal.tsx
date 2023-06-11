@@ -43,7 +43,7 @@ function ShareModal({
         <ModalCloseButton />
         <ModalBody>
           <Text>
-            Share this link so that anyone can auto connect to this dapp with
+            Share this link so that anyone can auto-connect to this dapp with
             your provided address!
           </Text>
           <HStack my="3">

@@ -78,6 +78,7 @@ function Body() {
     "address"
   );
   const urlFromURL = new URLSearchParams(window.location.search).get("url");
+  const urlFromCache = localStorage.getItem("appUrl");
   const chainFromURL = new URLSearchParams(window.location.search).get("chain");
   let networkIdViaURL = 1;
   if (chainFromURL) {
@@ -129,7 +130,7 @@ function Body() {
   const [isIFrameLoading, setIsIFrameLoading] = useState(false);
 
   const [inputAppUrl, setInputAppUrl] = useState<string | undefined>(
-    urlFromURL ?? undefined
+    urlFromURL ?? urlFromCache ?? undefined
   );
   const [iframeKey, setIframeKey] = useState(0); // hacky way to reload iframe when key changes
 
@@ -208,6 +209,12 @@ function Body() {
   useEffect(() => {
     localStorage.setItem("showAddress", showAddress);
   }, [showAddress]);
+
+  useEffect(() => {
+    if (inputAppUrl) {
+      localStorage.setItem("appUrl", inputAppUrl);
+    }
+  }, [inputAppUrl]);
 
   useEffect(() => {
     setIFrameAddress(address);

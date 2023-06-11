@@ -8,7 +8,10 @@ import {
   Input,
   Text,
   useDisclosure,
+  InputGroup,
+  InputRightElement,
 } from "@chakra-ui/react";
+import { DeleteIcon } from "@chakra-ui/icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShareAlt } from "@fortawesome/free-solid-svg-icons";
 import SupportedDapps from "./SupportedDapps";
@@ -57,14 +60,30 @@ function IFrameConnectTab({
           />
         </HStack>
         <HStack mt="2">
-          <Input
-            placeholder="https://app.uniswap.org/"
-            aria-label="dapp-url"
-            autoComplete="off"
-            value={inputAppUrl}
-            onChange={(e) => setInputAppUrl(e.target.value)}
-            bg={bg}
-          />
+          <InputGroup>
+            <Input
+              pr="3.5rem"
+              placeholder="https://app.uniswap.org/"
+              aria-label="dapp-url"
+              autoComplete="off"
+              value={inputAppUrl}
+              onChange={(e) => setInputAppUrl(e.target.value)}
+              bg={bg}
+            />
+            {inputAppUrl && (
+              <InputRightElement px="1rem" mr="0.5rem">
+                <Button
+                  h="1.75rem"
+                  size="sm"
+                  onClick={() => {
+                    setInputAppUrl("");
+                  }}
+                >
+                  <DeleteIcon />
+                </Button>
+              </InputRightElement>
+            )}
+          </InputGroup>
           {appUrl && (
             <>
               <Button onClick={onOpen}>
