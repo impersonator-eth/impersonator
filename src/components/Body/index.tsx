@@ -147,9 +147,7 @@ function Body() {
         if (_legacySignClient.peerMeta) {
           try {
             setLegacySignClient(_legacySignClient);
-            setShowAddress(
-              _showAddress ? _showAddress : _legacySignClient.accounts[0]
-            );
+            setShowAddress(_showAddress ?? _legacySignClient.accounts[0]);
             setAddress(_legacySignClient.accounts[0]);
             setUri(_legacySignClient.uri);
             setLegacyPeerMeta(_legacySignClient.peerMeta);
@@ -163,6 +161,11 @@ function Body() {
             console.log("Corrupt old session. Starting fresh");
             localStorage.removeItem("walletconnect");
           }
+        }
+      } else {
+        if (_showAddress) {
+          setShowAddress(_showAddress);
+          setAddress(_showAddress);
         }
       }
       // WC V2
@@ -288,6 +291,10 @@ function Body() {
       }
     } else {
       setWeb3Wallet(_web3wallet);
+      if (_showAddress) {
+        setShowAddress(_showAddress);
+        setAddress(_showAddress);
+      }
     }
 
     // for debugging
