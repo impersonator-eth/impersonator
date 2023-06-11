@@ -137,34 +137,37 @@ function Body() {
   const [sendTxnData, setSendTxnData] = useState<TxnDataType[]>([]);
 
   useEffect(() => {
-    // WC V1
-    const { session, _showAddress } = getCachedSession();
-    if (session) {
-      let _legacySignClient = new LegacySignClient({ session });
+    // only use cached address if no address from url provided
+    if (!addressFromURL) {
+      // WC V1
+      const { session, _showAddress } = getCachedSession();
+      if (session) {
+        let _legacySignClient = new LegacySignClient({ session });
 
-      if (_legacySignClient.peerMeta) {
-        try {
-          setLegacySignClient(_legacySignClient);
-          setShowAddress(
-            _showAddress ? _showAddress : _legacySignClient.accounts[0]
-          );
-          setAddress(_legacySignClient.accounts[0]);
-          setUri(_legacySignClient.uri);
-          setLegacyPeerMeta(_legacySignClient.peerMeta);
-          setIsConnected(true);
-          const chainId =
-            (_legacySignClient.chainId as unknown as { chainID: number })
-              .chainID || _legacySignClient.chainId;
+        if (_legacySignClient.peerMeta) {
+          try {
+            setLegacySignClient(_legacySignClient);
+            setShowAddress(
+              _showAddress ? _showAddress : _legacySignClient.accounts[0]
+            );
+            setAddress(_legacySignClient.accounts[0]);
+            setUri(_legacySignClient.uri);
+            setLegacyPeerMeta(_legacySignClient.peerMeta);
+            setIsConnected(true);
+            const chainId =
+              (_legacySignClient.chainId as unknown as { chainID: number })
+                .chainID || _legacySignClient.chainId;
 
-          setNetworkId(chainId);
-        } catch {
-          console.log("Corrupt old session. Starting fresh");
-          localStorage.removeItem("walletconnect");
+            setNetworkId(chainId);
+          } catch {
+            console.log("Corrupt old session. Starting fresh");
+            localStorage.removeItem("walletconnect");
+          }
         }
       }
+      // WC V2
+      initWeb3Wallet(true, _showAddress);
     }
-    // WC V2
-    initWeb3Wallet(true, _showAddress);
 
     setProvider(
       new ethers.providers.JsonRpcProvider(
@@ -789,6 +792,7 @@ function Body() {
                 iframeKey={iframeKey}
                 iframeRef={iframeRef}
                 setIsIFrameLoading={setIsIFrameLoading}
+                showAddress={showAddress}
               />
             );
           case 2:

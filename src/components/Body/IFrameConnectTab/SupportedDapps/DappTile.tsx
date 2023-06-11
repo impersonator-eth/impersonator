@@ -33,7 +33,7 @@ function DappTile({
       }}
     >
       <Center flexDir={"column"} h="100%" p="1rem">
-        <Image w="2rem" src={dapp.iconUrl} borderRadius="full" />
+        <Image bg="white" w="2rem" src={dapp.iconUrl} borderRadius="full" />
         <Text mt="0.5rem" textAlign={"center"}>
           {dapp.name}
         </Text>

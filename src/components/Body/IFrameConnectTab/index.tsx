@@ -6,9 +6,14 @@ import {
   HStack,
   FormControl,
   Input,
+  Text,
+  useDisclosure,
 } from "@chakra-ui/react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faShareAlt } from "@fortawesome/free-solid-svg-icons";
 import SupportedDapps from "./SupportedDapps";
 import AppUrlLabel from "./AppUrlLabel";
+import ShareModal from "./ShareModal";
 
 interface IFrameConnectTabParams {
   networkId: number;
@@ -21,6 +26,7 @@ interface IFrameConnectTabParams {
   setIsIFrameLoading: (value: boolean) => void;
   iframeKey: number;
   iframeRef: React.RefObject<HTMLIFrameElement> | null;
+  showAddress: string;
 }
 
 function IFrameConnectTab({
@@ -34,7 +40,10 @@ function IFrameConnectTab({
   iframeKey,
   iframeRef,
   setIsIFrameLoading,
+  showAddress,
 }: IFrameConnectTabParams) {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   return (
     <>
       <FormControl my={4}>
@@ -47,14 +56,32 @@ function IFrameConnectTab({
             setInputAppUrl={setInputAppUrl}
           />
         </HStack>
-        <Input
-          placeholder="https://app.uniswap.org/"
-          aria-label="dapp-url"
-          autoComplete="off"
-          value={inputAppUrl}
-          onChange={(e) => setInputAppUrl(e.target.value)}
-          bg={bg}
-        />
+        <HStack mt="2">
+          <Input
+            placeholder="https://app.uniswap.org/"
+            aria-label="dapp-url"
+            autoComplete="off"
+            value={inputAppUrl}
+            onChange={(e) => setInputAppUrl(e.target.value)}
+            bg={bg}
+          />
+          {appUrl && (
+            <>
+              <Button onClick={onOpen}>
+                <HStack>
+                  <FontAwesomeIcon icon={faShareAlt} />
+                  <Text>Share</Text>
+                </HStack>
+              </Button>
+              <ShareModal
+                isOpen={isOpen}
+                onClose={onClose}
+                appUrl={appUrl}
+                showAddress={showAddress}
+              />
+            </>
+          )}
+        </HStack>
       </FormControl>
       <Center>
         <Button onClick={() => initIFrame()} isLoading={isIFrameLoading}>
