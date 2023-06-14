@@ -817,6 +817,7 @@ function Body() {
         <TransactionRequests
           sendTxnData={sendTxnData}
           setSendTxnData={setSendTxnData}
+          networkId={networkId}
         />
       </Center>
     </Container>

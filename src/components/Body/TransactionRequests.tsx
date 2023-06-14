@@ -14,12 +14,14 @@ import {
   Tr,
   Th,
   Tbody,
+  Link,
 } from "@chakra-ui/react";
 import {
   InfoIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   DeleteIcon,
+  UnlockIcon,
 } from "@chakra-ui/icons";
 import CopyToClipboard from "./CopyToClipboard";
 import { TxnDataType } from "../../types";
@@ -41,14 +43,43 @@ const TD = ({ txt }: { txt: string }) => (
   </Td>
 );
 
+const TData = ({
+  calldata,
+  address,
+  networkId,
+}: {
+  calldata: string;
+  address: string;
+  networkId: number;
+}) => (
+  <Td>
+    <HStack>
+      <Tooltip label={calldata} hasArrow placement="top">
+        <Text>{slicedText(calldata)}</Text>
+      </Tooltip>
+      <CopyToClipboard txt={calldata} />
+      <Button title="Decode" size="sm">
+        <Link
+          href={`https://calldata-decoder.apoorv.xyz/?calldata=${calldata}&address=${address}&chainId=${networkId}`}
+          isExternal
+        >
+          <UnlockIcon />
+        </Link>
+      </Button>
+    </HStack>
+  </Td>
+);
+
 interface TransactionRequestsParams {
   sendTxnData: TxnDataType[];
   setSendTxnData: (value: TxnDataType[]) => void;
+  networkId: number;
 }
 
 function TransactionRequests({
   sendTxnData,
   setSendTxnData,
+  networkId,
 }: TransactionRequestsParams) {
   const { isOpen: tableIsOpen, onToggle: tableOnToggle } = useDisclosure();
 
@@ -109,7 +140,7 @@ function TransactionRequests({
               <Tr key={d.id}>
                 <TD txt={d.from} />
                 <TD txt={d.to} />
-                <TD txt={d.data} />
+                <TData calldata={d.data} address={d.to} networkId={networkId} />
                 <TD txt={d.value} />
               </Tr>
             ))}
