@@ -26,7 +26,7 @@ import {
 import CopyToClipboard from "./CopyToClipboard";
 import { TxnDataType } from "../../types";
 
-const slicedText = (txt: string) => {
+export const slicedText = (txt: string) => {
   return txt.length > 6
     ? `${txt.slice(0, 4)}...${txt.slice(txt.length - 2, txt.length)}`
     : txt;
