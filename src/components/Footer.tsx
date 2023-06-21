@@ -10,11 +10,12 @@ import {
   HStack,
   Box,
   Stack,
+  Center,
 } from "@chakra-ui/react";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
-import { faTwitter } from "@fortawesome/free-brands-svg-icons";
+import { faTwitter, faDiscord } from "@fortawesome/free-brands-svg-icons";
 
 const Social = ({ icon, link }: { icon: IconProp; link: string }) => {
   return (
@@ -76,6 +77,15 @@ function Footer() {
             <ExternalLinkIcon />
           </Link>
         </Heading>
+        <Center pt="1">
+          <Link
+            href={"https://discord.gg/4VTnuVzfmm"}
+            color="twitter.200"
+            isExternal
+          >
+            <FontAwesomeIcon icon={faDiscord} size="2x" />
+          </Link>
+        </Center>
       </VStack>
       <Spacer flex="1" />
     </Flex>

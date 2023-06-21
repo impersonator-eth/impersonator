@@ -30,6 +30,7 @@ import WalletConnectTab from "./WalletConnectTab";
 import IFrameConnectTab from "./IFrameConnectTab";
 import BrowserExtensionTab from "./BrowserExtensionTab";
 import TransactionRequests from "./TransactionRequests";
+import NotificationBar from "./NotificationBar";
 
 const WCMetadata = {
   name: "Impersonator",
@@ -744,83 +745,86 @@ function Body() {
   };
 
   return (
-    <Container my="16" minW={["0", "0", "2xl", "2xl"]}>
-      <Flex>
-        <Spacer flex="1" />
-        <TenderlySettings
-          tenderlyForkId={tenderlyForkId}
-          setTenderlyForkId={setTenderlyForkId}
+    <>
+      <NotificationBar />
+      <Container my="16" minW={["0", "0", "2xl", "2xl"]}>
+        <Flex>
+          <Spacer flex="1" />
+          <TenderlySettings
+            tenderlyForkId={tenderlyForkId}
+            setTenderlyForkId={setTenderlyForkId}
+          />
+        </Flex>
+        <AddressInput
+          showAddress={showAddress}
+          setShowAddress={setShowAddress}
+          setAddress={setAddress}
+          setIsAddressValid={setIsAddressValid}
+          bg={bgColor[colorMode]}
+          isAddressValid={isAddressValid}
+          selectedTabIndex={selectedTabIndex}
+          isConnected={isConnected}
+          appUrl={appUrl}
+          isIFrameLoading={isIFrameLoading}
+          updateAddress={updateAddress}
         />
-      </Flex>
-      <AddressInput
-        showAddress={showAddress}
-        setShowAddress={setShowAddress}
-        setAddress={setAddress}
-        setIsAddressValid={setIsAddressValid}
-        bg={bgColor[colorMode]}
-        isAddressValid={isAddressValid}
-        selectedTabIndex={selectedTabIndex}
-        isConnected={isConnected}
-        appUrl={appUrl}
-        isIFrameLoading={isIFrameLoading}
-        updateAddress={updateAddress}
-      />
-      <NetworkInput
-        primaryNetworkOptions={primaryNetworkOptions}
-        secondaryNetworkOptions={secondaryNetworkOptions}
-        selectedNetworkOption={selectedNetworkOption}
-        setSelectedNetworkOption={setSelectedNetworkOption}
-      />
-      <TabsSelect
-        selectedTabIndex={selectedTabIndex}
-        setSelectedTabIndex={setSelectedTabIndex}
-      />
-      {(() => {
-        switch (selectedTabIndex) {
-          case 0:
-            return (
-              <WalletConnectTab
-                uri={uri}
-                setUri={setUri}
-                bg={bgColor[colorMode]}
-                isConnected={isConnected}
-                initWalletConnect={initWalletConnect}
-                loading={loading}
-                setLoading={setLoading}
-                reset={reset}
-                legacyPeerMeta={legacyPeerMeta}
-                killSession={killSession}
-                web3WalletSession={web3WalletSession}
-              />
-            );
-          case 1:
-            return (
-              <IFrameConnectTab
-                networkId={networkId}
-                initIFrame={initIFrame}
-                setInputAppUrl={setInputAppUrl}
-                inputAppUrl={inputAppUrl}
-                bg={bgColor[colorMode]}
-                isIFrameLoading={isIFrameLoading}
-                appUrl={appUrl}
-                iframeKey={iframeKey}
-                iframeRef={iframeRef}
-                setIsIFrameLoading={setIsIFrameLoading}
-                showAddress={showAddress}
-              />
-            );
-          case 2:
-            return <BrowserExtensionTab />;
-        }
-      })()}
-      <Center>
-        <TransactionRequests
-          sendTxnData={sendTxnData}
-          setSendTxnData={setSendTxnData}
-          networkId={networkId}
+        <NetworkInput
+          primaryNetworkOptions={primaryNetworkOptions}
+          secondaryNetworkOptions={secondaryNetworkOptions}
+          selectedNetworkOption={selectedNetworkOption}
+          setSelectedNetworkOption={setSelectedNetworkOption}
         />
-      </Center>
-    </Container>
+        <TabsSelect
+          selectedTabIndex={selectedTabIndex}
+          setSelectedTabIndex={setSelectedTabIndex}
+        />
+        {(() => {
+          switch (selectedTabIndex) {
+            case 0:
+              return (
+                <WalletConnectTab
+                  uri={uri}
+                  setUri={setUri}
+                  bg={bgColor[colorMode]}
+                  isConnected={isConnected}
+                  initWalletConnect={initWalletConnect}
+                  loading={loading}
+                  setLoading={setLoading}
+                  reset={reset}
+                  legacyPeerMeta={legacyPeerMeta}
+                  killSession={killSession}
+                  web3WalletSession={web3WalletSession}
+                />
+              );
+            case 1:
+              return (
+                <IFrameConnectTab
+                  networkId={networkId}
+                  initIFrame={initIFrame}
+                  setInputAppUrl={setInputAppUrl}
+                  inputAppUrl={inputAppUrl}
+                  bg={bgColor[colorMode]}
+                  isIFrameLoading={isIFrameLoading}
+                  appUrl={appUrl}
+                  iframeKey={iframeKey}
+                  iframeRef={iframeRef}
+                  setIsIFrameLoading={setIsIFrameLoading}
+                  showAddress={showAddress}
+                />
+              );
+            case 2:
+              return <BrowserExtensionTab />;
+          }
+        })()}
+        <Center>
+          <TransactionRequests
+            sendTxnData={sendTxnData}
+            setSendTxnData={setSendTxnData}
+            networkId={networkId}
+          />
+        </Center>
+      </Container>
+    </>
   );
 }
 
