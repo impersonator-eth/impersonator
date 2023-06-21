@@ -6,6 +6,9 @@ import {
   Spacer,
   Box,
   Link,
+  HStack,
+  Text,
+  Image,
 } from "@chakra-ui/react";
 import { SunIcon, MoonIcon } from "@chakra-ui/icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -28,7 +31,10 @@ function Navbar() {
         fontSize={{ base: "2xl", sm: "3xl", md: "4xl" }}
         pr="2rem"
       >
-        🎭 Impersonator 🕵️
+        <HStack>
+          <Image src="/logo.png" w="3rem" mr="1rem" />
+          <Text>Impersonator</Text>
+        </HStack>
       </Heading>
       <Flex flex="1" justifyContent="flex-end" alignItems={"center"}>
         <Button onClick={toggleColorMode} rounded="full" h="40px" w="40px">
