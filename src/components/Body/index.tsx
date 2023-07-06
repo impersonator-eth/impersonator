@@ -9,9 +9,6 @@ import {
 } from "@chakra-ui/react";
 
 import { SingleValue } from "chakra-react-select";
-// WC v1
-import LegacySignClient from "@walletconnect/client";
-import { IClientMeta } from "@walletconnect/legacy-types";
 // WC v2
 import { Core } from "@walletconnect/core";
 import { Web3Wallet, IWeb3Wallet } from "@walletconnect/web3wallet";
@@ -117,13 +114,10 @@ function Body() {
     label: networksList[networkIdViaURL].name,
     value: networkIdViaURL,
   });
-  // WC v1
-  const [legacySignClient, setLegacySignClient] = useState<LegacySignClient>();
   // WC v2
   const [web3wallet, setWeb3Wallet] = useState<IWeb3Wallet>();
   const [web3WalletSession, setWeb3WalletSession] =
     useState<SessionTypes.Struct>();
-  const [legacyPeerMeta, setLegacyPeerMeta] = useState<IClientMeta>();
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -141,35 +135,8 @@ function Body() {
   useEffect(() => {
     // only use cached address if no address from url provided
     if (!addressFromURL) {
-      // WC V1
-      const { session, _showAddress } = getCachedSession();
-      if (session) {
-        let _legacySignClient = new LegacySignClient({ session });
-
-        if (_legacySignClient.peerMeta) {
-          try {
-            setLegacySignClient(_legacySignClient);
-            setShowAddress(_showAddress ?? _legacySignClient.accounts[0]);
-            setAddress(_legacySignClient.accounts[0]);
-            setUri(_legacySignClient.uri);
-            setLegacyPeerMeta(_legacySignClient.peerMeta);
-            setIsConnected(true);
-            const chainId =
-              (_legacySignClient.chainId as unknown as { chainID: number })
-                .chainID || _legacySignClient.chainId;
-
-            setNetworkId(chainId);
-          } catch {
-            console.log("Corrupt old session. Starting fresh");
-            localStorage.removeItem("walletconnect");
-          }
-        }
-      } else {
-        if (_showAddress) {
-          setShowAddress(_showAddress);
-          setAddress(_showAddress);
-        }
-      }
+      // getCachedSession
+      const _showAddress = localStorage.getItem("showAddress") ?? undefined;
       // WC V2
       initWeb3Wallet(true, _showAddress);
     }
@@ -197,11 +164,11 @@ function Body() {
   }, [provider]);
 
   useEffect(() => {
-    if (legacySignClient || web3wallet) {
+    if (web3wallet) {
       subscribeToEvents();
     }
     // eslint-disable-next-line
-  }, [legacySignClient, web3wallet]);
+  }, [web3wallet]);
 
   useEffect(() => {
     localStorage.setItem("tenderlyForkId", tenderlyForkId);
@@ -342,21 +309,6 @@ function Body() {
     return { isValid, _address: _address };
   };
 
-  const getCachedSession = () => {
-    const local = localStorage ? localStorage.getItem("walletconnect") : null;
-    const _showAddress = localStorage.getItem("showAddress") ?? undefined;
-
-    let session = null;
-    if (local) {
-      try {
-        session = JSON.parse(local);
-      } catch (error) {
-        throw error;
-      }
-    }
-    return { session, _showAddress };
-  };
-
   const initWalletConnect = async () => {
     setLoading(true);
     const { isValid } = await resolveAndValidateAddress();
@@ -366,14 +318,24 @@ function Body() {
 
       try {
         if (version === 1) {
-          let _legacySignClient = new LegacySignClient({ uri });
+          toast({
+            title: "Couldn't Connect",
+            description:
+              "The dapp is still using the deprecated WalletConnect V1",
+            status: "error",
+            isClosable: true,
+            duration: 8000,
+          });
+          setLoading(false);
 
-          if (!_legacySignClient.connected) {
-            await _legacySignClient.createSession();
-          }
+          // let _legacySignClient = new LegacySignClient({ uri });
 
-          setLegacySignClient(_legacySignClient);
-          setUri(_legacySignClient.uri);
+          // if (!_legacySignClient.connected) {
+          //   await _legacySignClient.createSession();
+          // }
+
+          // setLegacySignClient(_legacySignClient);
+          // setUri(_legacySignClient.uri);
         } else {
           await initWeb3Wallet();
         }
@@ -412,59 +374,7 @@ function Body() {
   const subscribeToEvents = async () => {
     console.log("ACTION", "subscribeToEvents");
 
-    if (legacySignClient) {
-      legacySignClient.on("session_request", (error, payload) => {
-        if (loading) {
-          setLoading(false);
-        }
-        console.log("EVENT", "session_request");
-
-        if (error) {
-          throw error;
-        }
-
-        console.log("SESSION_REQUEST", payload.params);
-        setLegacyPeerMeta(payload.params[0].peerMeta);
-        approveLegacySession();
-      });
-
-      legacySignClient.on("session_update", (error) => {
-        console.log("EVENT", "session_update");
-        setLoading(false);
-
-        if (error) {
-          throw error;
-        }
-      });
-
-      legacySignClient.on("call_request", async (error, payload) => {
-        console.log({ payload });
-
-        if (payload.method === "eth_sendTransaction") {
-          await handleSendTransaction(payload.id, payload.params);
-        }
-      });
-
-      legacySignClient.on("connect", (error, payload) => {
-        console.log("EVENT", "connect");
-
-        if (error) {
-          throw error;
-        }
-
-        // this.setState({ connected: true });
-      });
-
-      legacySignClient.on("disconnect", (error, payload) => {
-        console.log("EVENT", "disconnect");
-
-        if (error) {
-          throw error;
-        }
-
-        reset();
-      });
-    } else if (web3wallet) {
+    if (web3wallet) {
       web3wallet.on("session_proposal", async (proposal) => {
         if (loading) {
           setLoading(false);
@@ -590,12 +500,7 @@ function Body() {
       console.log({ res });
 
       // Approve Call Request
-      if (legacySignClient) {
-        legacySignClient.approveRequest({
-          id: res.id,
-          result: res.result,
-        });
-      } else if (web3wallet && topic) {
+      if (web3wallet && topic) {
         await web3wallet.respondSessionRequest({
           topic,
           response: {
@@ -628,26 +533,6 @@ function Body() {
     }
   };
 
-  const approveLegacySession = () => {
-    console.log("ACTION", "approveLegacySession");
-    if (legacySignClient) {
-      let chainId = networkId;
-      if (!chainId) {
-        chainId = 1; // default to ETH Mainnet if no network selected
-      }
-      legacySignClient.approveSession({ chainId, accounts: [address] });
-      setIsConnected(true);
-    }
-  };
-
-  // const rejectLegacySession = () => {
-  //   console.log("ACTION", "rejectSession");
-  //   if (legacySignClient) {
-  //     legacySignClient.rejectSession();
-  //     setPeerMeta(undefined);
-  //   }
-  // };
-
   const updateSession = async ({
     newChainId,
     newAddress,
@@ -658,12 +543,7 @@ function Body() {
     let _chainId = newChainId || networkId;
     let _address = newAddress || address;
 
-    if (legacySignClient && legacySignClient.connected) {
-      legacySignClient.updateSession({
-        chainId: _chainId,
-        accounts: [_address],
-      });
-    } else if (web3wallet && web3WalletSession) {
+    if (web3wallet && web3WalletSession) {
       await web3wallet.emitSessionEvent({
         topic: web3WalletSession.topic,
         event: {
@@ -714,12 +594,7 @@ function Body() {
   const killSession = async () => {
     console.log("ACTION", "killSession");
 
-    if (legacySignClient) {
-      legacySignClient.killSession();
-
-      setLegacyPeerMeta(undefined);
-      setIsConnected(false);
-    } else if (web3wallet && web3WalletSession) {
+    if (web3wallet && web3WalletSession) {
       try {
         await web3wallet.disconnectSession({
           topic: web3WalletSession.topic,
@@ -735,7 +610,6 @@ function Body() {
   };
 
   const reset = (persistUri?: boolean) => {
-    setLegacyPeerMeta(undefined);
     setWeb3WalletSession(undefined);
     setIsConnected(false);
     if (!persistUri) {
@@ -791,7 +665,6 @@ function Body() {
                   loading={loading}
                   setLoading={setLoading}
                   reset={reset}
-                  legacyPeerMeta={legacyPeerMeta}
                   killSession={killSession}
                   web3WalletSession={web3WalletSession}
                 />

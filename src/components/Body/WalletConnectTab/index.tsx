@@ -1,8 +1,6 @@
 import { Center, Button } from "@chakra-ui/react";
-import { IClientMeta } from "@walletconnect/legacy-types";
 import { SessionTypes } from "@walletconnect/types";
 import ConnectionDetails from "./ConnectionDetails";
-import LegacyConnectionDetails from "./LegacyConnectionDetails";
 import Loading from "./Loading";
 import URIInput from "./URIInput";
 
@@ -16,7 +14,6 @@ interface WalletConnectTabParams {
   setLoading: (value: boolean) => void;
   reset: (persistUri?: boolean) => void;
   killSession: () => void;
-  legacyPeerMeta: IClientMeta | undefined;
   web3WalletSession: SessionTypes.Struct | undefined;
 }
 
@@ -29,7 +26,6 @@ function WalletConnectTab({
   loading,
   setLoading,
   reset,
-  legacyPeerMeta,
   killSession,
   web3WalletSession,
 }: WalletConnectTabParams) {
@@ -52,12 +48,6 @@ function WalletConnectTab({
           isConnected={isConnected}
           setLoading={setLoading}
           reset={reset}
-        />
-      )}
-      {legacyPeerMeta && isConnected && (
-        <LegacyConnectionDetails
-          legacyPeerMeta={legacyPeerMeta}
-          killSession={killSession}
         />
       )}
       {web3WalletSession && isConnected && (
