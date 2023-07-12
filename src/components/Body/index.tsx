@@ -12,7 +12,7 @@ import { SingleValue } from "chakra-react-select";
 // WC v2
 import { Core } from "@walletconnect/core";
 import { Web3Wallet, IWeb3Wallet } from "@walletconnect/web3wallet";
-import { SessionTypes } from "@walletconnect/types";
+import { ProposalTypes, SessionTypes } from "@walletconnect/types";
 import { getSdkError, parseUri } from "@walletconnect/utils";
 import { ethers } from "ethers";
 import axios from "axios";
@@ -383,12 +383,17 @@ function Body() {
 
         const { requiredNamespaces, optionalNamespaces } = proposal.params;
         const namespaceKey = "eip155";
-        const requiredNamespace = requiredNamespaces[namespaceKey];
+        const requiredNamespace = requiredNamespaces[namespaceKey] as
+          | ProposalTypes.BaseRequiredNamespace
+          | undefined;
         const optionalNamespace = optionalNamespaces
           ? optionalNamespaces[namespaceKey]
           : undefined;
 
-        let chains: string[] | undefined = requiredNamespace.chains;
+        let chains: string[] | undefined =
+          requiredNamespace === undefined
+            ? undefined
+            : requiredNamespace.chains;
         if (optionalNamespace && optionalNamespace.chains) {
           if (chains) {
             // merge chains from requiredNamespace & optionalNamespace, while avoiding duplicates
@@ -408,11 +413,13 @@ function Body() {
         const namespace: SessionTypes.Namespace = {
           accounts,
           chains: chains,
-          methods: requiredNamespace.methods,
-          events: requiredNamespace.events,
+          methods:
+            requiredNamespace === undefined ? [] : requiredNamespace.methods,
+          events:
+            requiredNamespace === undefined ? [] : requiredNamespace.events,
         };
 
-        if (requiredNamespace.chains) {
+        if (requiredNamespace && requiredNamespace.chains) {
           const _chainId = parseInt(requiredNamespace.chains[0].split(":")[1]);
           setSelectedNetworkOption({
             label: networksList[_chainId].name,
