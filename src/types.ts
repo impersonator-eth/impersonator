@@ -1,5 +1,27 @@
 import { BigNumberish, BytesLike } from "ethers";
 
+export interface SelectedNetworkOption {
+  label: string;
+  value: number;
+}
+
+export interface SafeDappInfo {
+  id: number;
+  url: string;
+  name: string;
+  iconUrl: string;
+}
+
+export interface TxnDataType {
+  id: number;
+  from: string;
+  to: string;
+  data: string;
+  value: string;
+}
+
+// ======= iFrame Provider ======
+
 export declare const INTERFACE_MESSAGES: {
   readonly ENV_INFO: "ENV_INFO";
   readonly ON_SAFE_INFO: "ON_SAFE_INFO";

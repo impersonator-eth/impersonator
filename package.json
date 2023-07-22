@@ -8,9 +8,10 @@
     "@chakra-ui/react": "^1.6.5",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
-    "@fortawesome/fontawesome-svg-core": "^1.2.36",
-    "@fortawesome/free-brands-svg-icons": "^5.15.4",
-    "@fortawesome/react-fontawesome": "^0.1.15",
+    "@fortawesome/fontawesome-svg-core": "^6.4.0",
+    "@fortawesome/free-brands-svg-icons": "^6.4.0",
+    "@fortawesome/free-solid-svg-icons": "^6.4.0",
+    "@fortawesome/react-fontawesome": "^0.1.18",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
@@ -18,12 +19,17 @@
     "@types/node": "^17.0.10",
     "@types/react": "^17.0.38",
     "@types/react-dom": "^17.0.11",
-    "@walletconnect/client": "^1.6.2",
+    "@walletconnect/client": "^1.8.0",
+    "@walletconnect/core": "^2.7.3",
+    "@walletconnect/legacy-types": "^2.0.0",
+    "@walletconnect/types": "^2.7.3",
+    "@walletconnect/utils": "^2.7.3",
+    "@walletconnect/web3wallet": "^1.7.1",
     "axios": "^0.24.0",
     "chakra-react-select": "^4.4.3",
     "ethereum-checksum-address": "^0.0.6",
     "ethers": "^5.4.5",
-    "evm-rpcs-list": "^2.0.1",
+    "evm-rpcs-list": "^2.0.2",
     "framer-motion": "^4",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -45,19 +51,18 @@
     ]
   },
   "engines": {
-    "node": ">=14.0.0 <15.0.0"
+    "node": ">=16.0.0 <17.0.0"
   },
   "engineStrict": true,
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not op_mini all"
+  ],
+  "resolutions": {
+    "react-error-overlay": "6.0.9"
+  },
+  "devDependencies": {
+    "react-error-overlay": "6.0.9"
   }
 }
