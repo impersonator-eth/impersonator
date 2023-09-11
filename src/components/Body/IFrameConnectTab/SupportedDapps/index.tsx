@@ -44,7 +44,7 @@ function SupportedDapps({
   useEffect(() => {
     const fetchSafeDapps = async (networkId: number) => {
       const response = await axios.get<SafeDappInfo[]>(
-        `https://safe-client.gnosis.io/v1/chains/${networkId}/safe-apps`
+        `https://safe-client.safe.global/v1/chains/${networkId}/safe-apps`
       );
       setSafeDapps((dapps) => ({
         ...dapps,
