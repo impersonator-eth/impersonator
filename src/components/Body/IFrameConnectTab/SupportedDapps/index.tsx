@@ -98,7 +98,7 @@ function SupportedDapps({
         >
           <ModalHeader>Select a dapp</ModalHeader>
           <ModalCloseButton />
-          <ModalBody maxH="30rem" overflow={"clip"}>
+          <ModalBody>
             {(!safeDapps || !safeDapps[networkId]) && (
               <Center py="3rem" w="100%">
                 <Spinner />
