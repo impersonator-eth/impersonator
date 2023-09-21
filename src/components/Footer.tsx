@@ -64,7 +64,7 @@ function Footer() {
   const handleDonate = async (value: string) => {
     try {
       await sendTransaction({
-        to: "0x63A556c75443b176b5A4078e929e38bEb37a1ff2",
+        to: process.env.REACT_APP_DONATION_ADDRESS!,
         value: parseEther(value),
       });
       launchConfetti();
