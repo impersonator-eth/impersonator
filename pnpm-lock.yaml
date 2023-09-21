@@ -27,12 +27,14 @@ specifiers:
   '@walletconnect/utils': ^2.7.3
   '@walletconnect/web3wallet': ^1.7.1
   axios: ^0.24.0
+  blo: ^1.0.0
   chakra-react-select: ^4.4.3
   ethereum-checksum-address: ^0.0.6
   ethers: ^5.4.5
   evm-rpcs-list: ^2.0.2
   framer-motion: ^4
   react: ^18.2.0
+  react-confetti: ^6.1.0
   react-dom: ^18.2.0
   react-error-overlay: 6.0.9
   react-scripts: 5.0.1
@@ -66,12 +68,14 @@ dependencies:
   '@walletconnect/utils': 2.10.1
   '@walletconnect/web3wallet': 1.9.1
   axios: 0.24.0
+  blo: 1.0.0
   chakra-react-select: 4.7.2_r7eq5u22ldjcfbv3rbc4oq6mzm
   ethereum-checksum-address: 0.0.6
   ethers: 5.7.2
   evm-rpcs-list: 2.0.2
   framer-motion: 4.1.17_biqbaboplfbrettd7655fr4n2y
   react: 18.2.0
+  react-confetti: 6.1.0_react@18.2.0
   react-dom: 18.2.0_react@18.2.0
   react-scripts: 5.0.1_j5ip3o3v6sktjzl5cxtjyfbuo4
   react-simple-code-editor: 0.11.3_biqbaboplfbrettd7655fr4n2y
@@ -6302,6 +6306,11 @@ packages:
       file-uri-to-path: 1.0.0
     dev: false
 
+  /blo/1.0.0:
+    resolution: {integrity: sha512-P838VyvMQb+Z9nccKUQhj5mxdV0U7RP/aeEpsX6rNzgn18F9KnOfvN4BKdSUcefe+vE6G7WgT0En4ubhqkEgWA==}
+    engines: {node: '>=16'}
+    dev: false
+
   /bluebird/3.7.2:
     resolution: {integrity: sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==}
     dev: false
@@ -12130,6 +12139,16 @@ packages:
       react: 18.2.0
     dev: false
 
+  /react-confetti/6.1.0_react@18.2.0:
+    resolution: {integrity: sha512-7Ypx4vz0+g8ECVxr88W9zhcQpbeujJAVqL14ZnXJ3I23mOI9/oBVTQ3dkJhUmB0D6XOtCZEM6N0Gm9PMngkORw==}
+    engines: {node: '>=10.18'}
+    peerDependencies:
+      react: ^16.3.0 || ^17.0.1 || ^18.0.0
+    dependencies:
+      react: 18.2.0
+      tween-functions: 1.2.0
+    dev: false
+
   /react-dev-utils/12.0.1_gvqij7ajt65rpz4aw7xnkhglzu:
     resolution: {integrity: sha512-84Ivxmr17KjUupyqzFode6xKhjwuEJDROWKJy/BthkL7Wn6NJ8h4WE6k/exAv6ImS+0oZLRRW5j/aINMHyeGeQ==}
     engines: {node: '>=14'}
@@ -13727,6 +13746,10 @@ packages:
     dependencies:
       tslib: 1.14.1
       typescript: 4.9.5
+    dev: false
+
+  /tween-functions/1.2.0:
+    resolution: {integrity: sha512-PZBtLYcCLtEcjL14Fzb1gSxPBeL7nWvGhO5ZFPGqziCcr8uvHp0NDmdjBchp6KHL+tExcg0m3NISmKxhU394dA==}
     dev: false
 
   /type-check/0.3.2:
