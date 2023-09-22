@@ -6,56 +6,59 @@ import {
   Text,
   Link,
   HStack,
+  Center,
 } from "@chakra-ui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
+import axios from "axios";
 
-const CLOSED_KEY = "discord-notif-closed";
+// const CLOSED_KEY = "discord-notif-closed";
 
 function NotificationBar() {
-  const isClosed = localStorage.getItem(CLOSED_KEY);
+  // const isClosed = localStorage.getItem(CLOSED_KEY);
 
-  const [isVisible, setIsVisible] = useState(
-    isClosed === "true" ? false : true
-  );
+  // const [isVisible, setIsVisible] = useState(
+  //   isClosed === "true" ? false : true
+  // );
+
+  // useEffect(() => {
+  //   if (!isVisible) {
+  //     localStorage.setItem(CLOSED_KEY, "true");
+  //   }
+  // }, [isVisible]);
+
+  const [donor, setDonor] = useState<string>();
 
   useEffect(() => {
-    if (!isVisible) {
-      localStorage.setItem(CLOSED_KEY, "true");
-    }
-  }, [isVisible]);
+    axios
+      .get("https://api.impersonator.xyz/api")
+      .then((res) => {
+        setDonor(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
 
-  return isVisible ? (
+  return donor ? (
     <Alert status="info">
-      <AlertIcon />
-      <HStack flex={1}>
-        <Text>Share feature requests, report bugs and be the first to</Text>{" "}
-        <Text fontWeight={"semibold"}>try beta versions</Text>
-        <Text> by joining us on</Text>
-        <Link
-          href={"https://discord.gg/4VTnuVzfmm"}
-          color="cyan.300"
-          isExternal
-        >
-          <HStack>
-            <FontAwesomeIcon icon={faDiscord} size="1x" />
-            <Text>Discord</Text>
-            <ExternalLinkIcon />
-          </HStack>
-        </Link>
-      </HStack>
-      <CloseButton
+      <Center w="100%">
+        <Text>
+          <span style={{ fontSize: "1.2rem" }}>🏆</span> Thanks to{" "}
+          <span style={{ fontWeight: "bold" }}>{donor}</span> for donating in
+          Gitcoin Grants #18
+        </Text>
+      </Center>
+      {/* <CloseButton
         alignSelf="flex-start"
         position="relative"
         right={-1}
         top={-1}
         onClick={() => setIsVisible(false)}
-      />
+      /> */}
     </Alert>
-  ) : (
-    <></>
-  );
+  ) : null;
 }
 
 export default NotificationBar;

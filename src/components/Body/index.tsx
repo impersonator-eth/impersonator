@@ -628,7 +628,7 @@ function Body() {
   return (
     <>
       <NotificationBar />
-      <Container my="16" minW={["0", "0", "2xl", "2xl"]}>
+      <Container mt="10" mb="16" minW={["0", "0", "2xl", "2xl"]}>
         <Flex>
           <Spacer flex="1" />
           <TenderlySettings
