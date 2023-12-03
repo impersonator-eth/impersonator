@@ -60,7 +60,7 @@ const TData = ({
       <CopyToClipboard txt={calldata} />
       <Button title="Decode" size="sm">
         <Link
-          href={`https://calldata-decoder.apoorv.xyz/?calldata=${calldata}&address=${address}&chainId=${networkId}`}
+          href={`https://calldata.swiss-knife.xyz/decoder?calldata=${calldata}&address=${address}&chainId=${networkId}`}
           isExternal
         >
           <UnlockIcon />
