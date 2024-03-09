@@ -46,10 +46,20 @@ function NetworkInput({
         size="md"
         tagVariant="solid"
         chakraStyles={{
+          menuList: (provided) => ({
+            ...provided,
+            bg: "brand.black",
+          }),
+          option: (provided, state) => ({
+            ...provided,
+            color: "white",
+            bg: state.isFocused ? "whiteAlpha500" : "brand.lightBlack",
+          }),
           groupHeading: (provided, state) => ({
             ...provided,
             h: "1px",
             borderTop: "1px solid white",
+            bg: "brand.black",
           }),
         }}
         closeMenuOnSelect

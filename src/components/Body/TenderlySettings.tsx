@@ -43,7 +43,13 @@ function TenderlySettings({
           </Button>
         </Box>
       </PopoverTrigger>
-      <PopoverContent border={0} boxShadow="xl" rounded="xl" overflowY="auto">
+      <PopoverContent
+        border={0}
+        bg="brand.lightBlack"
+        boxShadow="xl"
+        rounded="xl"
+        overflowY="auto"
+      >
         <Box px="1rem" py="1rem">
           <HStack>
             <Text>(optional) Tenderly Fork Id:</Text>

@@ -18,7 +18,6 @@ interface AddressInputParams {
   setShowAddress: (value: string) => void;
   setAddress: (value: string) => void;
   setIsAddressValid: (value: boolean) => void;
-  bg: string;
   isAddressValid: boolean;
   selectedTabIndex: number;
   isConnected: boolean;
@@ -32,7 +31,6 @@ function AddressInput({
   setShowAddress,
   setAddress,
   setIsAddressValid,
-  bg,
   isAddressValid,
   selectedTabIndex,
   isConnected,
@@ -61,7 +59,7 @@ function AddressInput({
               setAddress(_showAddress);
               setIsAddressValid(true); // remove inValid warning when user types again
             }}
-            bg={bg}
+            bg={"brand.lightBlack"}
             isInvalid={!isAddressValid}
           />
           {(selectedTabIndex === 0 && isConnected) ||

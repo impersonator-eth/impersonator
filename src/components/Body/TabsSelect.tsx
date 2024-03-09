@@ -19,7 +19,7 @@ function TabsSelect({
         minH="3rem"
         px="1.5rem"
         spacing={"8"}
-        background="gray.700"
+        bg={"brand.lightBlack"}
         borderRadius="xl"
       >
         {tabs.map((t, i) => (

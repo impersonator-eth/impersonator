@@ -16,7 +16,6 @@ import { InfoIcon, DeleteIcon } from "@chakra-ui/icons";
 interface URIInputParams {
   uri: string;
   setUri: (value: string) => void;
-  bg: string;
   isConnected: boolean;
   initWalletConnect: () => void;
 }
@@ -24,7 +23,6 @@ interface URIInputParams {
 function URIInput({
   uri,
   setUri,
-  bg,
   isConnected,
   initWalletConnect,
 }: URIInputParams) {
@@ -63,6 +61,7 @@ function URIInput({
         <InputGroup>
           <Input
             pr={isConnected ? "0" : "3.5rem"}
+            bg={"brand.lightBlack"}
             placeholder="wc:xyz123"
             aria-label="uri"
             autoComplete="off"
@@ -73,7 +72,6 @@ function URIInput({
               setPasted(true);
               setUri(e.clipboardData.getData("text"));
             }}
-            bg={bg}
             isDisabled={isConnected}
           />
           {uri && !isConnected && (

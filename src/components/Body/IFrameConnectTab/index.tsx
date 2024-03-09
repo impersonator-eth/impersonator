@@ -24,7 +24,6 @@ interface IFrameConnectTabParams {
   inputAppUrl: string | undefined;
   setInputAppUrl: (value: string | undefined) => void;
   appUrl: string | undefined;
-  bg: string;
   isIFrameLoading: boolean;
   setIsIFrameLoading: (value: boolean) => void;
   iframeKey: number;
@@ -37,7 +36,6 @@ function IFrameConnectTab({
   initIFrame,
   setInputAppUrl,
   inputAppUrl,
-  bg,
   isIFrameLoading,
   appUrl,
   iframeKey,
@@ -63,12 +61,12 @@ function IFrameConnectTab({
           <InputGroup>
             <Input
               pr="3.5rem"
+              bg={"brand.lightBlack"}
               placeholder="https://app.uniswap.org/"
               aria-label="dapp-url"
               autoComplete="off"
               value={inputAppUrl}
               onChange={(e) => setInputAppUrl(e.target.value)}
-              bg={bg}
             />
             {inputAppUrl && (
               <InputRightElement px="1rem" mr="0.5rem">

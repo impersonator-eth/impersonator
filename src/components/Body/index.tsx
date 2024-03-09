@@ -641,7 +641,6 @@ function Body() {
           setShowAddress={setShowAddress}
           setAddress={setAddress}
           setIsAddressValid={setIsAddressValid}
-          bg={bgColor[colorMode]}
           isAddressValid={isAddressValid}
           selectedTabIndex={selectedTabIndex}
           isConnected={isConnected}
@@ -666,7 +665,6 @@ function Body() {
                 <WalletConnectTab
                   uri={uri}
                   setUri={setUri}
-                  bg={bgColor[colorMode]}
                   isConnected={isConnected}
                   initWalletConnect={initWalletConnect}
                   loading={loading}
@@ -683,7 +681,6 @@ function Body() {
                   initIFrame={initIFrame}
                   setInputAppUrl={setInputAppUrl}
                   inputAppUrl={inputAppUrl}
-                  bg={bgColor[colorMode]}
                   isIFrameLoading={isIFrameLoading}
                   appUrl={appUrl}
                   iframeKey={iframeKey}

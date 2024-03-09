@@ -25,6 +25,7 @@ import {
 } from "@chakra-ui/icons";
 import CopyToClipboard from "./CopyToClipboard";
 import { TxnDataType } from "../../types";
+import { useEffect } from "react";
 
 export const slicedText = (txt: string) => {
   return txt.length > 6
@@ -81,7 +82,16 @@ function TransactionRequests({
   setSendTxnData,
   networkId,
 }: TransactionRequestsParams) {
-  const { isOpen: tableIsOpen, onToggle: tableOnToggle } = useDisclosure();
+  const {
+    isOpen: tableIsOpen,
+    onOpen: tableOnOpen,
+    onToggle: tableOnToggle,
+  } = useDisclosure();
+
+  useEffect(() => {
+    // keep table open on load
+    tableOnOpen();
+  }, []);
 
   return (
     <Box

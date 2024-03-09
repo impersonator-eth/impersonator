@@ -95,6 +95,7 @@ function SupportedDapps({
             md: "40rem",
             lg: "60rem",
           }}
+          bg={"brand.lightBlack"}
         >
           <ModalHeader>Select a dapp</ModalHeader>
           <ModalCloseButton />

@@ -72,6 +72,7 @@ function AddressBook({
           lg: "60rem",
         }}
         pb="6"
+        bg={"brand.lightBlack"}
       >
         <ModalHeader>Address Book</ModalHeader>
         <ModalCloseButton />

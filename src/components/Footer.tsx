@@ -92,7 +92,13 @@ function Footer() {
         </Box>
       )}
       <VStack>
-        <Alert status="info" variant="solid" rounded="lg">
+        <Alert
+          status="info"
+          bg={"whiteAlpha.200"}
+          color="white"
+          variant="solid"
+          rounded="lg"
+        >
           <Stack direction={{ base: "column", md: "row" }}>
             <Center>Found the project helpful?</Center>
             <HStack>
@@ -113,13 +119,11 @@ function Footer() {
                 <>
                   <Button
                     size={"sm"}
-                    colorScheme={"linkedin"}
                     fontWeight={"bold"}
                     onClick={() => {
                       openSupportModal();
                     }}
-                    border="1px"
-                    borderColor={"cyan.500"}
+                    bg={"blackAlpha.500"}
                   >
                     Support!
                   </Button>
@@ -133,7 +137,7 @@ function Footer() {
                       backdropFilter="auto"
                       backdropBlur="3px"
                     />
-                    <ModalContent>
+                    <ModalContent bg={"brand.lightBlack"}>
                       <ModalHeader>Support</ModalHeader>
                       <ModalCloseButton />
                       <ModalBody pb={6}>

@@ -7,7 +7,6 @@ import URIInput from "./URIInput";
 interface WalletConnectTabParams {
   uri: string;
   setUri: (value: string) => void;
-  bg: string;
   isConnected: boolean;
   initWalletConnect: () => void;
   loading: boolean;
@@ -20,7 +19,6 @@ interface WalletConnectTabParams {
 function WalletConnectTab({
   uri,
   setUri,
-  bg,
   isConnected,
   initWalletConnect,
   loading,
@@ -34,7 +32,6 @@ function WalletConnectTab({
       <URIInput
         uri={uri}
         setUri={setUri}
-        bg={bg}
         isConnected={isConnected}
         initWalletConnect={initWalletConnect}
       />

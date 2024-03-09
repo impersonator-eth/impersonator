@@ -15,7 +15,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 
 function Navbar() {
-  const { colorMode, toggleColorMode } = useColorMode();
+  const { colorMode } = useColorMode();
   const underlineColor = { light: "gray.500", dark: "gray.400" };
 
   return (
@@ -32,14 +32,11 @@ function Navbar() {
         pr="2rem"
       >
         <HStack>
-          <Image src="/logo.png" w="3rem" mr="1rem" />
+          <Image src="/logo-no-bg.png" w="3rem" mr="1rem" />
           <Text>Impersonator</Text>
         </HStack>
       </Heading>
       <Flex flex="1" justifyContent="flex-end" alignItems={"center"}>
-        <Button onClick={toggleColorMode} rounded="full" h="40px" w="40px">
-          {colorMode === "light" ? <MoonIcon /> : <SunIcon />}
-        </Button>
         <Box pl="1rem">
           <Link
             href={"https://github.com/apoorvlathey/impersonator"}
