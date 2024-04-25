@@ -26,6 +26,7 @@ import {
 import CopyToClipboard from "./CopyToClipboard";
 import { TxnDataType } from "../../types";
 import { useEffect } from "react";
+import { ethers } from "ethers";
 
 export const slicedText = (txt: string) => {
   return txt.length > 6
@@ -38,6 +39,16 @@ const TD = ({ txt }: { txt: string }) => (
     <HStack>
       <Tooltip label={txt} hasArrow placement="top">
         <Text>{slicedText(txt)}</Text>
+      </Tooltip>
+      <CopyToClipboard txt={txt} />
+    </HStack>
+  </Td>
+);
+const ValueTD = ({ txt }: { txt: string }) => (
+  <Td>
+    <HStack>
+      <Tooltip label={`${txt} Wei`} hasArrow placement="top">
+        <Text>{ethers.utils.formatEther(txt)} ETH</Text>
       </Tooltip>
       <CopyToClipboard txt={txt} />
     </HStack>
@@ -151,7 +162,7 @@ function TransactionRequests({
                 <TD txt={d.from} />
                 <TD txt={d.to} />
                 <TData calldata={d.data} address={d.to} networkId={networkId} />
-                <TD txt={d.value} />
+                <ValueTD txt={d.value} />
               </Tr>
             ))}
           </Tbody>
