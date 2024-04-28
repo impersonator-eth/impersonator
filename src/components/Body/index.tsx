@@ -418,6 +418,11 @@ function Body() {
           events:
             requiredNamespace === undefined ? [] : requiredNamespace.events,
         };
+        namespace.methods = namespace.methods.includes("personal_sign")
+          ? namespace.methods
+          : [...namespace.methods, "personal_sign"];
+
+        console.log({ namespace });
 
         if (requiredNamespace && requiredNamespace.chains) {
           const _chainId = parseInt(requiredNamespace.chains[0].split(":")[1]);
@@ -450,6 +455,33 @@ function Body() {
 
         if (request.method === "eth_sendTransaction") {
           await handleSendTransaction(id, request.params, topic);
+        } else if (request.method === "personal_sign") {
+          console.log(request.params);
+
+          // == Injected wallet with same address as Impersonator for testing ==
+          // connect injected wallet to impersonator
+          await window.ethereum!.request({
+            method: "eth_requestAccounts",
+          });
+          // generated signature
+          const result = await window.ethereum!.request({
+            method: "personal_sign",
+            params: request.params,
+          });
+
+          const resp = {
+            topic,
+            response: {
+              jsonrpc: "2.0",
+              id,
+              result,
+            },
+          };
+          console.log(resp);
+
+          if (web3wallet && topic) {
+            await web3wallet.respondSessionRequest(resp);
+          }
         } else {
           await web3wallet.respondSessionRequest({
             topic,
