@@ -24,3 +24,10 @@
 
 3. Build react project <br />
    `yarn build`
+
+## Farcaster Tippers
+
+Thanks for all the following Farcaster users for tipping $DEGEN and supporting 🕵️ Impersonator:
+
+<!-- replace-degen-sponsors -->
+<!-- replace-degen-sponsors -->
