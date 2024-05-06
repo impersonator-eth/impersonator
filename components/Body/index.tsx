@@ -1,12 +1,7 @@
+"use client";
+
 import { useState, useEffect } from "react";
-import {
-  Container,
-  useColorMode,
-  useToast,
-  Center,
-  Spacer,
-  Flex,
-} from "@chakra-ui/react";
+import { Container, useToast, Center, Spacer, Flex } from "@chakra-ui/react";
 
 import { SingleValue } from "chakra-react-select";
 // WC v2
@@ -37,7 +32,7 @@ const WCMetadata = {
 };
 
 const core = new Core({
-  projectId: process.env.REACT_APP_WC_PROJECT_ID,
+  projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID,
 });
 
 const primaryNetworkIds = [
@@ -70,8 +65,6 @@ const allNetworksOptions = [
 ];
 
 function Body() {
-  const { colorMode } = useColorMode();
-  const bgColor = { light: "white", dark: "gray.700" };
   const addressFromURL = new URLSearchParams(window.location.search).get(
     "address"
   );
@@ -143,7 +136,7 @@ function Body() {
 
     setProvider(
       new ethers.providers.JsonRpcProvider(
-        `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`
+        `https://mainnet.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_KEY}`
       )
     );
 

@@ -1,7 +1,8 @@
+"use client";
+
 import "@rainbow-me/rainbowkit/styles.css";
 
-import ReactDOM from "react-dom";
-import App from "./App";
+import { CacheProvider } from "@chakra-ui/next-js";
 import { ChakraProvider } from "@chakra-ui/react";
 import {
   connectorsForWallets,
@@ -17,8 +18,8 @@ import { configureChains, createConfig, WagmiConfig } from "wagmi";
 import { mainnet, optimism, base, arbitrum } from "wagmi/chains";
 import { publicProvider } from "wagmi/providers/public";
 
-import theme from "./theme";
-import { SafeInjectProvider } from "./contexts/SafeInjectContext";
+import theme from "@/style/theme";
+import { SafeInjectProvider } from "@/contexts/SafeInjectContext";
 
 const { chains, publicClient } = configureChains(
   // the first chain is used by rainbowWallet to determine which chain to use
@@ -26,7 +27,7 @@ const { chains, publicClient } = configureChains(
   [publicProvider()]
 );
 
-const projectId = process.env.REACT_APP_WC_PROJECT_ID!;
+const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID!;
 const connectors = connectorsForWallets([
   {
     groupName: "Recommended",
@@ -44,19 +45,20 @@ export const wagmiConfig = createConfig({
   publicClient,
 });
 
-ReactDOM.render(
-  <ChakraProvider theme={theme}>
-    <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider
-        chains={chains}
-        theme={darkTheme()}
-        modalSize={"compact"}
-      >
-        <SafeInjectProvider>
-          <App />
-        </SafeInjectProvider>
-      </RainbowKitProvider>
-    </WagmiConfig>
-  </ChakraProvider>,
-  document.getElementById("root")
-);
+export const Providers = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <CacheProvider>
+      <ChakraProvider theme={theme}>
+        <WagmiConfig config={wagmiConfig}>
+          <RainbowKitProvider
+            chains={chains}
+            theme={darkTheme()}
+            modalSize={"compact"}
+          >
+            <SafeInjectProvider>{children}</SafeInjectProvider>
+          </RainbowKitProvider>
+        </WagmiConfig>
+      </ChakraProvider>
+    </CacheProvider>
+  );
+};

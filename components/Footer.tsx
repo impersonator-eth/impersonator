@@ -1,6 +1,7 @@
+"use client";
+
 import { useState } from "react";
 import {
-  useColorMode,
   Flex,
   VStack,
   Heading,
@@ -46,9 +47,6 @@ const Social = ({ icon, link }: { icon: IconProp; link: string }) => {
 };
 
 function Footer() {
-  const { colorMode } = useColorMode();
-  const underlineColor = { light: "gray.500", dark: "gray.400" };
-
   const { isConnected } = useAccount();
   const { chain } = useNetwork();
 
@@ -64,7 +62,7 @@ function Footer() {
   const handleDonate = async (value: string) => {
     try {
       await sendTransaction({
-        to: process.env.REACT_APP_DONATION_ADDRESS!,
+        to: process.env.NEXT_PUBLIC_DONATION_ADDRESS!,
         value: parseEther(value),
       });
       launchConfetti();
@@ -79,7 +77,7 @@ function Footer() {
   };
 
   return (
-    <Flex py="4" borderTop="2px" borderTopColor={underlineColor[colorMode]}>
+    <Flex py="4" borderTop="2px" borderTopColor={"gray.400"}>
       <Spacer flex="1" />
       {showConfetti && (
         <Box zIndex={9999} position={"fixed"} top={0} left={0}>
@@ -102,11 +100,11 @@ function Footer() {
           <Stack direction={{ base: "column", md: "row" }}>
             <Center>Found the project helpful?</Center>
             <HStack>
-              {process.env.REACT_APP_GITCOIN_GRANTS_ACTIVE === "true" ? (
+              {process.env.NEXT_PUBLIC_GITCOIN_GRANTS_ACTIVE === "true" ? (
                 <>
                   <Text>Support it on</Text>
                   <Link
-                    href={process.env.REACT_APP_GITCOIN_GRANTS_LINK}
+                    href={process.env.NEXT_PUBLIC_GITCOIN_GRANTS_LINK}
                     isExternal
                   >
                     <HStack fontWeight="bold" textDecor="underline">

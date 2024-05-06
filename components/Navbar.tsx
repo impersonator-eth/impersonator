@@ -1,6 +1,5 @@
 import {
   Button,
-  useColorMode,
   Flex,
   Heading,
   Spacer,
@@ -10,20 +9,16 @@ import {
   Text,
   Image,
 } from "@chakra-ui/react";
-import { SunIcon, MoonIcon } from "@chakra-ui/icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 
 function Navbar() {
-  const { colorMode } = useColorMode();
-  const underlineColor = { light: "gray.500", dark: "gray.400" };
-
   return (
     <Flex
       py="4"
       px={["2", "4", "10", "10"]}
       borderBottom="2px"
-      borderBottomColor={underlineColor[colorMode]}
+      borderBottomColor={"gray.400"}
     >
       <Spacer flex="1" />
       <Heading

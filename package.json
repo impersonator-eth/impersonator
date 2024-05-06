@@ -3,8 +3,15 @@
   "version": "0.1.0",
   "homepage": ".",
   "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
   "dependencies": {
     "@chakra-ui/icons": "^1.0.14",
+    "@chakra-ui/next-js": "^2.2.0",
     "@chakra-ui/react": "^2.8.1",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
@@ -13,10 +20,6 @@
     "@fortawesome/free-solid-svg-icons": "^6.4.0",
     "@fortawesome/react-fontawesome": "^0.1.18",
     "@rainbow-me/rainbowkit": "^1.0.11",
-    "@testing-library/jest-dom": "^5.11.4",
-    "@testing-library/react": "^11.1.0",
-    "@testing-library/user-event": "^12.1.10",
-    "@types/jest": "^27.4.0",
     "@types/node": "^17.0.10",
     "@types/react": "^17.0.38",
     "@types/react-dom": "^17.0.11",
@@ -33,6 +36,7 @@
     "ethers": "^5.4.5",
     "evm-rpcs-list": "^2.0.3",
     "framer-motion": "^4",
+    "next": "^14.2.3",
     "react": "^18.2.0",
     "react-confetti": "^6.1.0",
     "react-dom": "^18.2.0",
@@ -43,36 +47,7 @@
     "wagmi": "^1.4.2",
     "web-vitals": "^1.0.1"
   },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      "chrome >= 67",
-      "edge >= 79",
-      "firefox >= 68",
-      "opera >= 54",
-      "safari >= 14"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "resolutions": {
-    "react-error-overlay": "6.0.9"
-  },
   "devDependencies": {
-    "react-error-overlay": "6.0.9"
+    "pino-pretty": "^11.0.0"
   }
 }
