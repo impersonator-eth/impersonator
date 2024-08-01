@@ -620,7 +620,7 @@ function Body() {
 
   return (
     <>
-      <NotificationBar />
+      {/* <NotificationBar /> */}
       <Container mt="10" mb="16" minW={["0", "0", "2xl", "2xl"]}>
         <Flex>
           <Spacer flex="1" />
