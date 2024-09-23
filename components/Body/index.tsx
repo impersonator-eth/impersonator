@@ -6,7 +6,7 @@ import { Container, useToast, Center, Spacer, Flex } from "@chakra-ui/react";
 import { SingleValue } from "chakra-react-select";
 // WC v2
 import { Core } from "@walletconnect/core";
-import { Web3Wallet, IWeb3Wallet } from "@walletconnect/web3wallet";
+import { WalletKit, IWalletKit } from "@reown/walletkit";
 import { ProposalTypes, SessionTypes } from "@walletconnect/types";
 import { getSdkError, parseUri } from "@walletconnect/utils";
 import { ethers } from "ethers";
@@ -65,12 +65,18 @@ const allNetworksOptions = [
 ];
 
 function Body() {
-  const addressFromURL = new URLSearchParams(window.location.search).get(
-    "address"
-  );
-  const urlFromURL = new URLSearchParams(window.location.search).get("url");
-  const urlFromCache = localStorage.getItem("appUrl");
-  const chainFromURL = new URLSearchParams(window.location.search).get("chain");
+  let addressFromURL: string | null = null;
+  let urlFromURL: string | null = null;
+  let urlFromCache: string | null = null;
+  let chainFromURL: string | null = null;
+
+  if (typeof window !== "undefined") {
+    const urlParams = new URLSearchParams(window.location.search);
+    addressFromURL = urlParams.get("address");
+    urlFromURL = urlParams.get("url");
+    urlFromCache = localStorage.getItem("appUrl");
+    chainFromURL = urlParams.get("chain");
+  }
   let networkIdViaURL = 1;
   if (chainFromURL) {
     for (let i = 0; i < allNetworksOptions.length; i++) {
@@ -108,7 +114,7 @@ function Body() {
     value: networkIdViaURL,
   });
   // WC v2
-  const [web3wallet, setWeb3Wallet] = useState<IWeb3Wallet>();
+  const [web3wallet, setWeb3Wallet] = useState<IWalletKit>();
   const [web3WalletSession, setWeb3WalletSession] =
     useState<SessionTypes.Struct>();
   const [isConnected, setIsConnected] = useState(false);
@@ -231,7 +237,7 @@ function Body() {
     onlyIfActiveSessions?: boolean,
     _showAddress?: string
   ) => {
-    const _web3wallet = await Web3Wallet.init({
+    const _web3wallet = await WalletKit.init({
       core,
       metadata: WCMetadata,
     });
