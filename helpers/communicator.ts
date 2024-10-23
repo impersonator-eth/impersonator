@@ -77,7 +77,7 @@ class AppCommunicator {
         // @ts-expect-error Handler existence is checked in this.canHandleMessage
         const response = await handler(msg);
 
-        // If response is not returned, it means the response will be send somewhere else
+        // If response is not returned, it means the response will be sent somewhere else
         if (typeof response !== "undefined") {
           this.send(response, msg.data.id);
         }
