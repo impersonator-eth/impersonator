@@ -16,7 +16,7 @@ import axios from "axios";
 const CLOSED_KEY = "new-ui-notif-closed";
 
 function NotificationBar() {
-  const isClosed = localStorage.getItem(CLOSED_KEY);
+  // const isClosed = localStorage.getItem(CLOSED_KEY);
 
   // const [isVisible, setIsVisible] = useState(
   //   isClosed === "true" ? false : true

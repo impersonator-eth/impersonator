@@ -66,16 +66,22 @@ const allNetworksOptions = [
 
 function Body() {
   let addressFromURL: string | null = null;
+  let showAddressCache: string | null = null;
   let urlFromURL: string | null = null;
   let urlFromCache: string | null = null;
   let chainFromURL: string | null = null;
+  let tenderlyForkIdCache: string | null = null;
 
   if (typeof window !== "undefined") {
     const urlParams = new URLSearchParams(window.location.search);
     addressFromURL = urlParams.get("address");
     urlFromURL = urlParams.get("url");
-    urlFromCache = localStorage.getItem("appUrl");
     chainFromURL = urlParams.get("chain");
+  }
+  if (typeof localStorage !== "undefined") {
+    showAddressCache = localStorage.getItem("showAddress");
+    urlFromCache = localStorage.getItem("appUrl");
+    tenderlyForkIdCache = localStorage.getItem("tenderlyForkId");
   }
   let networkIdViaURL = 1;
   if (chainFromURL) {
@@ -103,10 +109,10 @@ function Body() {
 
   const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider>();
   const [showAddress, setShowAddress] = useState(
-    addressFromURL ?? localStorage.getItem("showAddress") ?? ""
+    addressFromURL ?? showAddressCache ?? ""
   ); // gets displayed in input. ENS name remains as it is
   const [address, setAddress] = useState(
-    addressFromURL ?? localStorage.getItem("showAddress") ?? ""
+    addressFromURL ?? showAddressCache ?? ""
   ); // internal resolved address
   const [isAddressValid, setIsAddressValid] = useState(true);
   const [uri, setUri] = useState("");
@@ -133,7 +139,7 @@ function Body() {
   const [iframeKey, setIframeKey] = useState(0); // hacky way to reload iframe when key changes
 
   const [tenderlyForkId, setTenderlyForkId] = useState(
-    localStorage.getItem("tenderlyForkId") ?? ""
+    tenderlyForkIdCache ?? ""
   );
   const [sendTxnData, setSendTxnData] = useState<TxnDataType[]>([]);
 
