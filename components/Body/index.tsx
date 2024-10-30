@@ -128,7 +128,10 @@ function Body() {
   );
   const [iframeKey, setIframeKey] = useState(0); // hacky way to reload iframe when key changes
 
-  const [tenderlyForkId, setTenderlyForkId] = useState("");
+  const storedTenderlyForkId = localStorage.getItem("tenderlyForkId");
+  const [tenderlyForkId, setTenderlyForkId] = useState(
+    storedTenderlyForkId ?? ""
+  );
   const [sendTxnData, setSendTxnData] = useState<TxnDataType[]>([]);
 
   useEffect(() => {
@@ -145,9 +148,6 @@ function Body() {
         `https://mainnet.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_KEY}`
       )
     );
-
-    const storedTenderlyForkId = localStorage.getItem("tenderlyForkId");
-    setTenderlyForkId(storedTenderlyForkId ? storedTenderlyForkId : "");
   }, []);
 
   useEffect(() => {
@@ -518,7 +518,7 @@ function Body() {
       }
 
       toast({
-        title: "Txn successful",
+        title: "Txn Simulated on Tenderly",
         description: `Hash: ${res.result}`,
         status: "success",
         position: "bottom-right",
