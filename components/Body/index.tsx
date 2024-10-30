@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Container, useToast, Center, Spacer, Flex } from "@chakra-ui/react";
 
 import { SingleValue } from "chakra-react-select";
@@ -172,13 +172,6 @@ function Body() {
   }, [provider]);
 
   useEffect(() => {
-    if (web3wallet) {
-      subscribeToEvents();
-    }
-    // eslint-disable-next-line
-  }, [web3wallet]);
-
-  useEffect(() => {
     localStorage.setItem("tenderlyForkId", tenderlyForkId);
   }, [tenderlyForkId]);
 
@@ -236,7 +229,17 @@ function Body() {
               },
             ],
           })
-          .then((res) => console.log(res.data));
+          .then((res) => {
+            console.log(res.data);
+            toast({
+              title: "Txn Simulated on Tenderly",
+              description: `Hash: ${res.data.result}`,
+              status: "success",
+              position: "bottom-right",
+              duration: null,
+              isClosable: true,
+            });
+          });
       }
     }
     // eslint-disable-next-line
@@ -380,86 +383,109 @@ function Body() {
     setAppUrl(_inputAppUrl);
   };
 
-  const subscribeToEvents = async () => {
-    console.log("ACTION", "subscribeToEvents");
+  const onSessionProposal = useCallback(
+    async (proposal) => {
+      if (loading) {
+        setLoading(false);
+      }
+      console.log("EVENT", "session_proposal", proposal);
 
-    if (web3wallet) {
-      web3wallet.on("session_proposal", async (proposal) => {
-        if (loading) {
-          setLoading(false);
+      const { requiredNamespaces, optionalNamespaces } = proposal.params;
+      const namespaceKey = "eip155";
+      const requiredNamespace = requiredNamespaces[namespaceKey] as
+        | ProposalTypes.BaseRequiredNamespace
+        | undefined;
+      const optionalNamespace = optionalNamespaces
+        ? optionalNamespaces[namespaceKey]
+        : undefined;
+
+      let chains: string[] | undefined =
+        requiredNamespace === undefined ? undefined : requiredNamespace.chains;
+      if (optionalNamespace && optionalNamespace.chains) {
+        if (chains) {
+          // merge chains from requiredNamespace & optionalNamespace, while avoiding duplicates
+          chains = Array.from(new Set(chains.concat(optionalNamespace.chains)));
+        } else {
+          chains = optionalNamespace.chains;
         }
-        console.log("EVENT", "session_proposal", proposal);
-
-        const { requiredNamespaces, optionalNamespaces } = proposal.params;
-        const namespaceKey = "eip155";
-        const requiredNamespace = requiredNamespaces[namespaceKey] as
-          | ProposalTypes.BaseRequiredNamespace
-          | undefined;
-        const optionalNamespace = optionalNamespaces
-          ? optionalNamespaces[namespaceKey]
-          : undefined;
-
-        let chains: string[] | undefined =
-          requiredNamespace === undefined
-            ? undefined
-            : requiredNamespace.chains;
-        if (optionalNamespace && optionalNamespace.chains) {
-          if (chains) {
-            // merge chains from requiredNamespace & optionalNamespace, while avoiding duplicates
-            chains = Array.from(
-              new Set(chains.concat(optionalNamespace.chains))
-            );
-          } else {
-            chains = optionalNamespace.chains;
-          }
-        }
-
-        const accounts: string[] = [];
-        chains?.map((chain) => {
-          accounts.push(`${chain}:${address}`);
-          return null;
-        });
-        const namespace: SessionTypes.Namespace = {
-          accounts,
-          chains: chains,
-          methods:
-            requiredNamespace === undefined ? [] : requiredNamespace.methods,
-          events:
-            requiredNamespace === undefined ? [] : requiredNamespace.events,
-        };
-
-        if (requiredNamespace && requiredNamespace.chains) {
-          const _chainId = parseInt(requiredNamespace.chains[0].split(":")[1]);
-          setSelectedNetworkOption({
-            label: networksList[_chainId].name,
-            value: _chainId,
-          });
-        }
-
-        const session = await web3wallet.approveSession({
-          id: proposal.id,
-          namespaces: {
-            [namespaceKey]: namespace,
-          },
-        });
-        setWeb3WalletSession(session);
-        setIsConnected(true);
-      });
-      try {
-        await web3wallet.core.pairing.pair({ uri });
-      } catch (e) {
-        console.error(e);
       }
 
-      web3wallet.on("session_request", async (event) => {
-        const { topic, params, id } = event;
-        const { request } = params;
+      const accounts: string[] = [];
+      chains?.map((chain) => {
+        accounts.push(`${chain}:${address}`);
+        return null;
+      });
+      const namespace: SessionTypes.Namespace = {
+        accounts,
+        chains: chains,
+        methods:
+          requiredNamespace === undefined ? [] : requiredNamespace.methods,
+        events: requiredNamespace === undefined ? [] : requiredNamespace.events,
+      };
 
-        console.log("EVENT", "session_request", event);
+      if (requiredNamespace && requiredNamespace.chains) {
+        const _chainId = parseInt(requiredNamespace.chains[0].split(":")[1]);
+        setSelectedNetworkOption({
+          label: networksList[_chainId].name,
+          value: _chainId,
+        });
+      }
 
-        if (request.method === "eth_sendTransaction") {
-          await handleSendTransaction(id, request.params, topic);
+      const session = await web3wallet?.approveSession({
+        id: proposal.id,
+        namespaces: {
+          [namespaceKey]: namespace,
+        },
+      });
+      setWeb3WalletSession(session);
+      setIsConnected(true);
+    },
+    [web3wallet]
+  );
+
+  const handleSendTransaction = useCallback(
+    async (id: number, params: any[], topic?: string) => {
+      setSendTxnData((data) => {
+        const newTxn = {
+          id: id,
+          from: params[0].from,
+          to: params[0].to,
+          data: params[0].data,
+          value: params[0].value
+            ? parseInt(params[0].value, 16).toString()
+            : "0",
+        };
+
+        if (data.some((d) => d.id === newTxn.id)) {
+          return data;
         } else {
+          return [newTxn, ...data];
+        }
+      });
+
+      if (tenderlyForkId.length > 0) {
+        const { data: res } = await axios.post(
+          "https://rpc.tenderly.co/fork/" + tenderlyForkId,
+          {
+            jsonrpc: "2.0",
+            id: id,
+            method: "eth_sendTransaction",
+            params: params,
+          }
+        );
+        console.log({ res });
+
+        // Approve Call Request
+        if (web3wallet && topic) {
+          // await web3wallet.respondSessionRequest({
+          //   topic,
+          //   response: {
+          //     jsonrpc: "2.0",
+          //     id: res.id,
+          //     result: res.result,
+          //   },
+          // });
+
           await web3wallet.respondSessionRequest({
             topic,
             response: {
@@ -472,91 +498,96 @@ function Body() {
             },
           });
         }
-      });
 
-      web3wallet.on("session_delete", () => {
-        console.log("EVENT", "session_delete");
-
-        reset();
-      });
-    }
-  };
-
-  const handleSendTransaction = async (
-    id: number,
-    params: any[],
-    topic?: string
-  ) => {
-    setSendTxnData((data) => {
-      const newTxn = {
-        id: id,
-        from: params[0].from,
-        to: params[0].to,
-        data: params[0].data,
-        value: params[0].value ? parseInt(params[0].value, 16).toString() : "0",
-      };
-
-      if (data.some((d) => d.id === newTxn.id)) {
-        return data;
+        toast({
+          title: "Txn Simulated on Tenderly",
+          description: `Hash: ${res.result}`,
+          status: "success",
+          position: "bottom-right",
+          duration: null,
+          isClosable: true,
+        });
       } else {
-        return [newTxn, ...data];
-      }
-    });
-
-    if (tenderlyForkId.length > 0) {
-      const { data: res } = await axios.post(
-        "https://rpc.tenderly.co/fork/" + tenderlyForkId,
-        {
-          jsonrpc: "2.0",
-          id: id,
-          method: "eth_sendTransaction",
-          params: params,
+        if (web3wallet && topic) {
+          await web3wallet.respondSessionRequest({
+            topic,
+            response: {
+              jsonrpc: "2.0",
+              id: id,
+              error: {
+                code: 0,
+                message: "Method not supported by Impersonator",
+              },
+            },
+          });
         }
-      );
-      console.log({ res });
+      }
+    },
+    [tenderlyForkId, web3wallet]
+  );
 
-      // Approve Call Request
-      if (web3wallet && topic) {
-        // await web3wallet.respondSessionRequest({
-        //   topic,
-        //   response: {
-        //     jsonrpc: "2.0",
-        //     id: res.id,
-        //     result: res.result,
-        //   },
-        // });
+  const onSessionRequest = useCallback(
+    async (event) => {
+      const { topic, params, id } = event;
+      const { request } = params;
 
-        await web3wallet.respondSessionRequest({
+      console.log("EVENT", "session_request", event);
+
+      if (request.method === "eth_sendTransaction") {
+        await handleSendTransaction(id, request.params, topic);
+      } else {
+        await web3wallet?.respondSessionRequest({
           topic,
           response: {
             jsonrpc: "2.0",
             id: id,
-            error: { code: 0, message: "Method not supported by Impersonator" },
+            error: {
+              code: 0,
+              message: "Method not supported by Impersonator",
+            },
           },
         });
       }
+    },
+    [web3wallet, handleSendTransaction]
+  );
 
-      toast({
-        title: "Txn Simulated on Tenderly",
-        description: `Hash: ${res.result}`,
-        status: "success",
-        position: "bottom-right",
-        duration: null,
-        isClosable: true,
-      });
-    } else {
-      if (web3wallet && topic) {
-        await web3wallet.respondSessionRequest({
-          topic,
-          response: {
-            jsonrpc: "2.0",
-            id: id,
-            error: { code: 0, message: "Method not supported by Impersonator" },
-          },
-        });
-      }
-    }
+  const onSessionDelete = () => {
+    console.log("EVENT", "session_delete");
+
+    reset();
   };
+
+  const subscribeToEvents = useCallback(async () => {
+    console.log("ACTION", "subscribeToEvents");
+
+    if (web3wallet) {
+      web3wallet.on("session_proposal", onSessionProposal);
+      try {
+        await web3wallet.core.pairing.pair({ uri });
+      } catch (e) {
+        console.error(e);
+      }
+
+      web3wallet.on("session_request", onSessionRequest);
+
+      web3wallet.on("session_delete", onSessionDelete);
+    }
+  }, [handleSendTransaction, web3wallet]);
+
+  useEffect(() => {
+    if (web3wallet) {
+      subscribeToEvents();
+    }
+    return () => {
+      // Clean up event listeners
+      if (web3wallet) {
+        web3wallet.removeListener("session_proposal", onSessionProposal);
+        web3wallet.removeListener("session_request", onSessionRequest);
+        web3wallet.removeListener("session_delete", onSessionDelete);
+      }
+    };
+  }, [web3wallet, subscribeToEvents]);
 
   const updateSession = async ({
     newChainId,

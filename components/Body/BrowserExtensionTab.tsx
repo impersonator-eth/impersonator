@@ -24,7 +24,7 @@ function BrowserExtensionTab() {
           </chakra.a>
         </Text>
       </Box>
-      <HStack mt="2" w="full" fontSize={"lg"}>
+      {/* <HStack mt="2" w="full" fontSize={"lg"}>
         <Text>Read more:</Text>
         <Link
           color="cyan.200"
@@ -34,7 +34,7 @@ function BrowserExtensionTab() {
         >
           Launch Tweet
         </Link>
-      </HStack>
+      </HStack> */}
       <Image mt="2" src="/extension.png" />
     </Center>
   );
