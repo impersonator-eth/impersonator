@@ -102,8 +102,12 @@ function Body() {
   } = useSafeInject();
 
   const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider>();
-  const [showAddress, setShowAddress] = useState(addressFromURL ?? ""); // gets displayed in input. ENS name remains as it is
-  const [address, setAddress] = useState(addressFromURL ?? ""); // internal resolved address
+  const [showAddress, setShowAddress] = useState(
+    addressFromURL ?? localStorage.getItem("showAddress") ?? ""
+  ); // gets displayed in input. ENS name remains as it is
+  const [address, setAddress] = useState(
+    addressFromURL ?? localStorage.getItem("showAddress") ?? ""
+  ); // internal resolved address
   const [isAddressValid, setIsAddressValid] = useState(true);
   const [uri, setUri] = useState("");
   const [networkId, setNetworkId] = useState(networkIdViaURL);
@@ -128,9 +132,8 @@ function Body() {
   );
   const [iframeKey, setIframeKey] = useState(0); // hacky way to reload iframe when key changes
 
-  const storedTenderlyForkId = localStorage.getItem("tenderlyForkId");
   const [tenderlyForkId, setTenderlyForkId] = useState(
-    storedTenderlyForkId ?? ""
+    localStorage.getItem("tenderlyForkId") ?? ""
   );
   const [sendTxnData, setSendTxnData] = useState<TxnDataType[]>([]);
 
@@ -245,6 +248,7 @@ function Body() {
     if (onlyIfActiveSessions) {
       const sessions = _web3wallet.getActiveSessions();
       const sessionsArray = Object.values(sessions);
+      console.log({ sessions });
       if (sessionsArray.length > 0) {
         const _address =
           sessionsArray[0].namespaces["eip155"].accounts[0].split(":")[2];
@@ -507,12 +511,21 @@ function Body() {
 
       // Approve Call Request
       if (web3wallet && topic) {
+        // await web3wallet.respondSessionRequest({
+        //   topic,
+        //   response: {
+        //     jsonrpc: "2.0",
+        //     id: res.id,
+        //     result: res.result,
+        //   },
+        // });
+
         await web3wallet.respondSessionRequest({
           topic,
           response: {
             jsonrpc: "2.0",
-            id: res.id,
-            result: res.result,
+            id: id,
+            error: { code: 0, message: "Method not supported by Impersonator" },
           },
         });
       }
@@ -601,6 +614,10 @@ function Body() {
     console.log("ACTION", "killSession");
 
     if (web3wallet && web3WalletSession) {
+      setWeb3WalletSession(undefined);
+      setUri("");
+      setIsConnected(false);
+
       try {
         await web3wallet.disconnectSession({
           topic: web3WalletSession.topic,
@@ -609,9 +626,6 @@ function Body() {
       } catch (e) {
         console.error("killSession", e);
       }
-      setWeb3WalletSession(undefined);
-      setUri("");
-      setIsConnected(false);
     }
   };
 
