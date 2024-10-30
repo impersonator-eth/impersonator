@@ -200,11 +200,10 @@ function Footer() {
           </Stack>
         </Alert>
         <Heading size="md">
-          Built by:{" "}
-          <Social icon={faTwitter} link="https://twitter.com/apoorvlathey" />
-          <Link href="https://twitter.com/apoorvlathey" isExternal>
+          Built by: <Social icon={faTwitter} link="https://x.com/apoorveth" />
+          <Link href="https://x.com/apoorveth" isExternal>
             <Text decoration="underline" display="inline">
-              @apoorvlathey
+              @apoorveth
             </Text>{" "}
             <ExternalLinkIcon />
           </Link>
