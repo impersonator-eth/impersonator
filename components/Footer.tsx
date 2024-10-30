@@ -100,102 +100,100 @@ function Footer() {
           <Stack direction={{ base: "column", md: "row" }}>
             <Center>Found the project helpful?</Center>
             <HStack>
-              {process.env.NEXT_PUBLIC_GITCOIN_GRANTS_ACTIVE === "true" ? (
-                <>
-                  <Text>Support it on</Text>
-                  <Link
-                    href={process.env.NEXT_PUBLIC_GITCOIN_GRANTS_LINK}
-                    isExternal
-                  >
-                    <HStack fontWeight="bold" textDecor="underline">
-                      <Text>Gitcoin Grants</Text>
-                      <ExternalLinkIcon />
-                    </HStack>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Button
-                    size={"sm"}
-                    fontWeight={"bold"}
-                    onClick={() => {
-                      openSupportModal();
-                    }}
-                    bg={"blackAlpha.500"}
-                  >
-                    Support!
-                  </Button>
-                  <Modal
-                    isOpen={isSupportModalOpen}
-                    onClose={closeSupportModal}
-                    isCentered
-                  >
-                    <ModalOverlay
-                      bg="none"
-                      backdropFilter="auto"
-                      backdropBlur="3px"
-                    />
-                    <ModalContent bg={"brand.lightBlack"}>
-                      <ModalHeader>Support</ModalHeader>
-                      <ModalCloseButton />
-                      <ModalBody pb={6}>
-                        <Container>
-                          <Center>
-                            <CustomConnectButton />
-                          </Center>
-                          <Text mt={4} size="md">
-                            Select amount to donate:
-                          </Text>
-                          <SimpleGrid mt={3} columns={3}>
-                            {["0.001", "0.005", "0.01"].map((value, i) => (
-                              <GridItem key={i}>
-                                <Center>
-                                  <Button
-                                    onClick={() => handleDonate(value)}
-                                    isDisabled={
-                                      !isConnected || chain?.unsupported
-                                    }
-                                  >
-                                    {value} Ξ
-                                  </Button>
-                                </Center>
-                              </GridItem>
-                            ))}
-                          </SimpleGrid>
-                          <Center mt={4}>or</Center>
-                          <InputGroup mt={4}>
-                            <Input
-                              type="number"
-                              placeholder="Custom amount"
-                              onChange={(e) => setDonateValue(e.target.value)}
-                              isDisabled={!isConnected || chain?.unsupported}
-                            />
-                            <InputRightElement
-                              bg="gray.600"
-                              fontWeight={"bold"}
-                              roundedRight={"lg"}
-                            >
-                              Ξ
-                            </InputRightElement>
-                          </InputGroup>
-                          <Center mt={2}>
-                            <Button
-                              onClick={() => {
-                                if (donateValue) {
-                                  handleDonate(donateValue);
-                                }
-                              }}
-                              isDisabled={!donateValue || chain?.unsupported}
-                            >
-                              Donate
-                            </Button>
-                          </Center>
-                        </Container>
-                      </ModalBody>
-                    </ModalContent>
-                  </Modal>
-                </>
-              )}
+              <Button
+                size={"sm"}
+                fontWeight={"bold"}
+                onClick={() => {
+                  openSupportModal();
+                }}
+                bg={"blackAlpha.500"}
+              >
+                Support!
+              </Button>
+              <Modal
+                isOpen={isSupportModalOpen}
+                onClose={closeSupportModal}
+                isCentered
+              >
+                <ModalOverlay
+                  bg="none"
+                  backdropFilter="auto"
+                  backdropBlur="3px"
+                />
+                <ModalContent bg={"brand.lightBlack"}>
+                  <ModalHeader>Support</ModalHeader>
+                  <ModalCloseButton />
+                  <ModalBody pb={6}>
+                    {process.env.NEXT_PUBLIC_GITCOIN_GRANTS_ACTIVE ===
+                      "true" && (
+                      <Center mb={6} py={3} bg="whiteAlpha.200" rounded={"lg"}>
+                        <HStack>
+                          <Text>Support on</Text>
+                          <Link
+                            href={process.env.NEXT_PUBLIC_GITCOIN_GRANTS_LINK}
+                            isExternal
+                          >
+                            <HStack fontWeight="bold" textDecor="underline">
+                              <Text>Gitcoin Grants</Text>
+                              <ExternalLinkIcon />
+                            </HStack>
+                          </Link>
+                        </HStack>
+                      </Center>
+                    )}
+                    <Container>
+                      <Center>
+                        <CustomConnectButton />
+                      </Center>
+                      <Text mt={4} size="md">
+                        Select amount to donate:
+                      </Text>
+                      <SimpleGrid mt={3} columns={3}>
+                        {["0.001", "0.005", "0.01"].map((value, i) => (
+                          <GridItem key={i}>
+                            <Center>
+                              <Button
+                                onClick={() => handleDonate(value)}
+                                isDisabled={!isConnected || chain?.unsupported}
+                              >
+                                {value} Ξ
+                              </Button>
+                            </Center>
+                          </GridItem>
+                        ))}
+                      </SimpleGrid>
+                      <Center mt={4}>or</Center>
+                      <InputGroup mt={4}>
+                        <Input
+                          type="number"
+                          placeholder="Custom amount"
+                          onChange={(e) => setDonateValue(e.target.value)}
+                          isDisabled={!isConnected || chain?.unsupported}
+                        />
+                        <InputRightElement
+                          bg="gray.600"
+                          fontWeight={"bold"}
+                          roundedRight={"lg"}
+                        >
+                          Ξ
+                        </InputRightElement>
+                      </InputGroup>
+                      <Center mt={2}>
+                        <Button
+                          onClick={() => {
+                            if (donateValue) {
+                              handleDonate(donateValue);
+                            }
+                          }}
+                          isDisabled={!donateValue || chain?.unsupported}
+                        >
+                          Donate
+                        </Button>
+                      </Center>
+                    </Container>
+                  </ModalBody>
+                </ModalContent>
+              </Modal>
             </HStack>
           </Stack>
         </Alert>

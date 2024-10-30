@@ -640,7 +640,9 @@ function Body() {
 
   return (
     <>
-      {/* <NotificationBar /> */}
+      {process.env.NEXT_PUBLIC_GITCOIN_GRANTS_ACTIVE === "true" && (
+        <NotificationBar />
+      )}
       <Container mt="10" mb="16" minW={["0", "0", "2xl", "2xl"]}>
         <Flex>
           <Spacer flex="1" />
