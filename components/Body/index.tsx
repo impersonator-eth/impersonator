@@ -677,10 +677,14 @@ function Body() {
 
   return (
     <>
-      {process.env.NEXT_PUBLIC_GITCOIN_GRANTS_ACTIVE === "true" && (
+      {/* {process.env.NEXT_PUBLIC_GITCOIN_GRANTS_ACTIVE === "true" && (
         <NotificationBar />
-      )}
-      <Container mt="10" mb="16" minW={["0", "0", "2xl", "2xl"]}>
+      )} */}
+      <NotificationBar />
+      <Center mt="8" fontStyle={"italic"}>
+        Connect to dapps as any ETH Address!
+      </Center>
+      <Container mt="2" mb="16" minW={["0", "0", "2xl", "2xl"]}>
         <Flex>
           <Spacer flex="1" />
           <TenderlySettings

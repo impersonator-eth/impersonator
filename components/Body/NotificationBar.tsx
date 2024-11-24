@@ -41,54 +41,52 @@ function NotificationBar() {
   //     });
   // }, []);
 
-  return process.env.NEXT_PUBLIC_GITCOIN_GRANTS_ACTIVE === "true" ? (
+  return (
     <Alert status="info" bg={"#151515"}>
       <Center w="100%">
         <Link
-          href={process.env.NEXT_PUBLIC_GITCOIN_GRANTS_LINK}
+          href={"https://solana.impersonator.xyz"}
           isExternal
           _hover={{
             textDecor: "none",
           }}
         >
-          <HStack
-            position="relative"
-            sx={{
-              "&::after": {
-                content: '""',
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: "2px",
-                background: "linear-gradient(90deg, #FF0080, #7928CA, #FF0080)",
-                backgroundSize: "200% 100%",
-                animation: "gradient 3s linear infinite",
-                "@keyframes gradient": {
-                  "0%": { backgroundPosition: "0% 0%" },
-                  "100%": { backgroundPosition: "200% 0%" },
-                },
-              },
-            }}
-          >
-            <Text>Support on</Text>
+          <HStack>
+            <Text>
+              🟣 <b>SOLANA</b> support is live:
+            </Text>
 
-            <HStack ml={-0.5} fontWeight="bold">
-              <Text>Gitcoin Grants</Text>
+            <HStack
+              ml={-0.5}
+              fontWeight="bold"
+              position="relative"
+              sx={{
+                "&::after": {
+                  content: '""',
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: "2px",
+                  background:
+                    "linear-gradient(90deg, #FF0080, #7928CA, #FF0080)",
+                  backgroundSize: "200% 100%",
+                  animation: "gradient 3s linear infinite",
+                  "@keyframes gradient": {
+                    "0%": { backgroundPosition: "0% 0%" },
+                    "100%": { backgroundPosition: "200% 0%" },
+                  },
+                },
+              }}
+            >
+              <Text>solana.impersonator.xyz</Text>
               <ExternalLinkIcon />
             </HStack>
           </HStack>
         </Link>
       </Center>
-      {/* <CloseButton
-        alignSelf="flex-start"
-        position="relative"
-        right={-1}
-        top={-1}
-        onClick={() => setIsVisible(false)}
-      /> */}
     </Alert>
-  ) : null;
+  );
 }
 
 export default NotificationBar;
