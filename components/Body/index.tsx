@@ -39,12 +39,14 @@ const primaryNetworkIds = [
   1, // ETH Mainnet
   42161, // Arbitrum One
   43114, // Avalanche
+  80094, // Berachain
   56, // BSC
+  8453, // Base
   250, // Fantom Opera
-  5, // Goerli Testnet
   100, // Gnosis
   10, // Optimism
   137, // Polygon
+  130, // Unichain
 ];
 
 const primaryNetworkOptions = primaryNetworkIds.map((id) => {

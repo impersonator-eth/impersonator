@@ -81,8 +81,8 @@ importers:
         specifier: ^5.4.5
         version: 5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       evm-rpcs-list:
-        specifier: ^2.0.3
-        version: 2.0.3
+        specifier: ^2.1.0
+        version: 2.1.0
       framer-motion:
         specifier: ^4
         version: 4.1.17(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -4133,6 +4133,7 @@ packages:
   eslint@8.57.0:
     resolution: {integrity: sha512-dZ6+mexnaTIbSBZWgou51U6OmzIhYM2VcNdtiTtI7qPNZm35Akpr0f6vtw3w1Kmn5PYo+tZVfh13WrhpS6oLqQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
 
   espree@9.6.1:
@@ -4208,8 +4209,8 @@ packages:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
 
-  evm-rpcs-list@2.0.3:
-    resolution: {integrity: sha512-78MtvlVx2DHwD7oaHqA783t12jEXCgQDAv6w+EaRkNhQuINFxCvbmONnXGRmwYALL2pc+LFTjI/Jwm6SKbLQfQ==}
+  evm-rpcs-list@2.1.0:
+    resolution: {integrity: sha512-nFHJgaGjX3mM4Xp6Y+v6z15O8d3J7984x+ojbJClGZUBHx7ECd3wljLSIit3Mb6sqPHG84ed0TOUkkgPmLNwOg==}
 
   execa@5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
@@ -13615,7 +13616,7 @@ snapshots:
 
   events@3.3.0: {}
 
-  evm-rpcs-list@2.0.3: {}
+  evm-rpcs-list@2.1.0: {}
 
   execa@5.1.1:
     dependencies:
