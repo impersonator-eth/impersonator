@@ -92,12 +92,16 @@ function Footer() {
       <VStack>
         <Alert
           status="info"
+          maxW="20rem"
           bg={"whiteAlpha.200"}
           color="white"
           variant="solid"
           rounded="lg"
         >
-          <Stack direction={{ base: "column", md: "row" }}>
+          <Stack
+            direction={{ base: "column", md: "row" }}
+            justifyContent="space-between"
+          >
             <Center>Found the project helpful?</Center>
             <HStack>
               <Button
@@ -213,6 +217,41 @@ function Footer() {
             isExternal
           >
             <FontAwesomeIcon icon={faDiscord} size="2x" />
+          </Link>
+        </Center>
+        <Center pt="2">
+          <Link
+            href={"https://solana.impersonator.xyz"}
+            isExternal
+            _hover={{
+              textDecor: "none",
+            }}
+          >
+            <HStack
+              fontWeight="bold"
+              position="relative"
+              sx={{
+                "&::after": {
+                  content: '""',
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: "2px",
+                  background:
+                    "linear-gradient(90deg, #FF0080, #7928CA, #FF0080)",
+                  backgroundSize: "200% 100%",
+                  animation: "gradient 3s linear infinite",
+                  "@keyframes gradient": {
+                    "0%": { backgroundPosition: "0% 0%" },
+                    "100%": { backgroundPosition: "200% 0%" },
+                  },
+                },
+              }}
+            >
+              <Text>🟣 SOLANA support is live: solana.impersonator.xyz</Text>
+              <ExternalLinkIcon />
+            </HStack>
           </Link>
         </Center>
       </VStack>
