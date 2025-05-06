@@ -34,7 +34,7 @@
     "chakra-react-select": "^4.4.3",
     "ethereum-checksum-address": "^0.0.6",
     "ethers": "^5.4.5",
-    "evm-rpcs-list": "^2.1.0",
+    "evm-rpcs-list": "^2.2.0",
     "framer-motion": "^4",
     "next": "^14.2.3",
     "react": "^18.2.0",
