@@ -36,7 +36,10 @@ function WalletConnectTab({
         initWalletConnect={initWalletConnect}
       />
       <Center>
-        <Button onClick={() => initWalletConnect()} isDisabled={isConnected}>
+        <Button
+          onClick={() => initWalletConnect()}
+          isDisabled={isConnected || loading || !uri}
+        >
           Connect
         </Button>
       </Center>

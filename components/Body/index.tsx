@@ -31,9 +31,28 @@ const WCMetadata = {
   icons: ["https://www.impersonator.xyz/favicon.ico"],
 };
 
-const core = new Core({
-  projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID,
-});
+// Pin Core + WalletKit as cross-HMR singletons. Without this, Next.js dev
+// HMR re-evaluates the module on every save and spawns a fresh Core, so two
+// (or more) relay clients race for the same project ID — that's what shows
+// up in the console as a "Restore will override. subscription" loop.
+type WCGlobals = {
+  __impersonator_wc_core?: InstanceType<typeof Core>;
+  __impersonator_wc_walletkit_promise?: Promise<IWalletKit>;
+};
+const wcGlobals = globalThis as unknown as WCGlobals;
+
+const core =
+  wcGlobals.__impersonator_wc_core ??
+  (wcGlobals.__impersonator_wc_core = new Core({
+    projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID,
+  }));
+
+const getWalletKit = (): Promise<IWalletKit> =>
+  wcGlobals.__impersonator_wc_walletkit_promise ??
+  (wcGlobals.__impersonator_wc_walletkit_promise = WalletKit.init({
+    core,
+    metadata: WCMetadata,
+  }));
 
 const primaryNetworkIds = [
   1, // ETH Mainnet
@@ -67,37 +86,10 @@ const allNetworksOptions = [
 ];
 
 function Body() {
-  let addressFromURL: string | null = null;
-  let showAddressCache: string | null = null;
-  let urlFromURL: string | null = null;
-  let urlFromCache: string | null = null;
-  let chainFromURL: string | null = null;
-  let tenderlyForkIdCache: string | null = null;
-
-  if (typeof window !== "undefined") {
-    const urlParams = new URLSearchParams(window.location.search);
-    addressFromURL = urlParams.get("address");
-    urlFromURL = urlParams.get("url");
-    chainFromURL = urlParams.get("chain");
-  }
-  if (typeof localStorage !== "undefined") {
-    showAddressCache = localStorage.getItem("showAddress");
-    urlFromCache = localStorage.getItem("appUrl");
-    tenderlyForkIdCache = localStorage.getItem("tenderlyForkId");
-  }
-  let networkIdViaURL = 1;
-  if (chainFromURL) {
-    for (let i = 0; i < allNetworksOptions.length; i++) {
-      if (
-        allNetworksOptions[i].name
-          .toLowerCase()
-          .includes(chainFromURL.toLowerCase())
-      ) {
-        networkIdViaURL = allNetworksOptions[i].chainId;
-        break;
-      }
-    }
-  }
+  // NOTE: do NOT read window/localStorage at render time. SSR has no access
+  // to either, so seeding useState from them produces server/client diverge
+  // and a hydration mismatch. All URL- and cache-derived state is loaded
+  // post-mount in the effect below.
   const toast = useToast();
 
   const {
@@ -110,20 +102,16 @@ function Body() {
   } = useSafeInject();
 
   const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider>();
-  const [showAddress, setShowAddress] = useState(
-    addressFromURL ?? showAddressCache ?? ""
-  ); // gets displayed in input. ENS name remains as it is
-  const [address, setAddress] = useState(
-    addressFromURL ?? showAddressCache ?? ""
-  ); // internal resolved address
+  const [showAddress, setShowAddress] = useState(""); // gets displayed in input. ENS name remains as it is
+  const [address, setAddress] = useState(""); // internal resolved address
   const [isAddressValid, setIsAddressValid] = useState(true);
   const [uri, setUri] = useState("");
-  const [networkId, setNetworkId] = useState(networkIdViaURL);
+  const [networkId, setNetworkId] = useState(1);
   const [selectedNetworkOption, setSelectedNetworkOption] = useState<
     SingleValue<SelectedNetworkOption>
   >({
-    label: networksList[networkIdViaURL].name,
-    value: networkIdViaURL,
+    label: networksList["1"].name,
+    value: 1,
   });
   // WC v2
   const [web3wallet, setWeb3Wallet] = useState<IWalletKit>();
@@ -132,34 +120,104 @@ function Body() {
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [selectedTabIndex, setSelectedTabIndex] = useState(urlFromURL ? 1 : 0);
+  const [selectedTabIndex, setSelectedTabIndex] = useState(0);
   const [isIFrameLoading, setIsIFrameLoading] = useState(false);
 
-  const [inputAppUrl, setInputAppUrl] = useState<string | undefined>(
-    urlFromURL ?? urlFromCache ?? undefined
-  );
+  const [inputAppUrl, setInputAppUrl] = useState<string | undefined>(undefined);
   const [iframeKey, setIframeKey] = useState(0); // hacky way to reload iframe when key changes
 
-  const [tenderlyForkId, setTenderlyForkId] = useState(
-    tenderlyForkIdCache ?? ""
-  );
+  const [tenderlyForkId, setTenderlyForkId] = useState("");
   const [sendTxnData, setSendTxnData] = useState<TxnDataType[]>([]);
+  // Flips true after the mount effect has loaded URL/localStorage state.
+  // Write-effects below gate on this so they don't clobber cached values
+  // on the first render.
+  const [hydrated, setHydrated] = useState(false);
+  // `undefined` = no boot pending; a string|null is the seedAppUrl to use
+  // once `provider` is ready (a one-shot signal from the mount effect).
+  const [pendingIFrameBoot, setPendingIFrameBoot] = useState<
+    string | null | undefined
+  >(undefined);
 
   useEffect(() => {
-    // only use cached address if no address from url provided
-    if (!addressFromURL) {
-      // getCachedSession
-      const _showAddress = localStorage.getItem("showAddress") ?? undefined;
-      // WC V2
-      initWeb3Wallet(true, _showAddress);
+    // Hydrate URL- and localStorage-derived state post-mount so SSR and the
+    // first client render agree.
+    const urlParams = new URLSearchParams(window.location.search);
+    const addressFromURL = urlParams.get("address");
+    const urlFromURL = urlParams.get("url");
+    const chainFromURL = urlParams.get("chain");
+
+    const showAddressCache = localStorage.getItem("showAddress");
+    const urlFromCache = localStorage.getItem("appUrl");
+    const tenderlyForkIdCache = localStorage.getItem("tenderlyForkId");
+
+    let networkIdViaURL = 1;
+    if (chainFromURL) {
+      for (let i = 0; i < allNetworksOptions.length; i++) {
+        if (
+          allNetworksOptions[i].name
+            .toLowerCase()
+            .includes(chainFromURL.toLowerCase())
+        ) {
+          networkIdViaURL = allNetworksOptions[i].chainId;
+          break;
+        }
+      }
     }
 
-    setProvider(
-      new ethers.providers.JsonRpcProvider(
-        `https://mainnet.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_KEY}`
-      )
+    const seedAddress = addressFromURL ?? showAddressCache ?? "";
+    if (seedAddress) {
+      setShowAddress(seedAddress);
+      setAddress(seedAddress);
+    }
+    if (networkIdViaURL !== 1) {
+      setNetworkId(networkIdViaURL);
+      setSelectedNetworkOption({
+        label: networksList[networkIdViaURL].name,
+        value: networkIdViaURL,
+      });
+    }
+    if (urlFromURL) {
+      setSelectedTabIndex(1);
+    }
+    const seedAppUrl = urlFromURL ?? urlFromCache ?? undefined;
+    if (seedAppUrl) {
+      setInputAppUrl(seedAppUrl);
+    }
+    if (tenderlyForkIdCache) {
+      setTenderlyForkId(tenderlyForkIdCache);
+    }
+
+    // WalletKit is a singleton — initialize exactly once on mount.
+    // Avoids re-running WalletKit.init on every Connect, which previously
+    // caused the events-effect below to re-pair with the current URI each
+    // time and accumulate sessions on the relay.
+    const _showAddress = !addressFromURL
+      ? showAddressCache ?? undefined
+      : undefined;
+    initWeb3Wallet(true, _showAddress);
+
+    const _provider = new ethers.providers.JsonRpcProvider(
+      `https://mainnet.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_KEY}`
     );
+    setProvider(_provider);
+
+    // Defer the iframe boot to a provider-ready effect below. Stash the
+    // intent in a ref-like state so that effect can pick it up.
+    if (addressFromURL && urlFromURL) {
+      setPendingIFrameBoot(seedAppUrl ?? null);
+    }
+
+    setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (provider && pendingIFrameBoot !== undefined) {
+      initIFrame(pendingIFrameBoot ?? undefined);
+      setPendingIFrameBoot(undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [provider, pendingIFrameBoot]);
 
   useEffect(() => {
     updateNetwork((selectedNetworkOption as SelectedNetworkOption).value);
@@ -167,25 +225,21 @@ function Body() {
   }, [selectedNetworkOption]);
 
   useEffect(() => {
-    if (provider && addressFromURL && urlFromURL) {
-      initIFrame();
-    }
-    // eslint-disable-next-line
-  }, [provider]);
-
-  useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem("tenderlyForkId", tenderlyForkId);
-  }, [tenderlyForkId]);
+  }, [tenderlyForkId, hydrated]);
 
   useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem("showAddress", showAddress);
-  }, [showAddress]);
+  }, [showAddress, hydrated]);
 
   useEffect(() => {
+    if (!hydrated) return;
     if (inputAppUrl) {
       localStorage.setItem("appUrl", inputAppUrl);
     }
-  }, [inputAppUrl]);
+  }, [inputAppUrl, hydrated]);
 
   useEffect(() => {
     setIFrameAddress(address);
@@ -251,20 +305,36 @@ function Body() {
     onlyIfActiveSessions?: boolean,
     _showAddress?: string
   ) => {
-    const _web3wallet = await WalletKit.init({
-      core,
-      metadata: WCMetadata,
-    });
+    const _web3wallet = await getWalletKit();
 
     if (onlyIfActiveSessions) {
       const sessions = _web3wallet.getActiveSessions();
       const sessionsArray = Object.values(sessions);
       console.log({ sessions });
-      if (sessionsArray.length > 0) {
+
+      // Disconnect any extra accumulated sessions — keep only the most
+      // recent. Stale sessions otherwise stay live on the relay and count
+      // against our complexity budget.
+      if (sessionsArray.length > 1) {
+        const stale = sessionsArray.slice(0, -1);
+        for (const s of stale) {
+          try {
+            await _web3wallet.disconnectSession({
+              topic: s.topic,
+              reason: getSdkError("USER_DISCONNECTED"),
+            });
+          } catch (e) {
+            console.error("cleanup stale session", e);
+          }
+        }
+      }
+
+      const active = sessionsArray[sessionsArray.length - 1];
+      if (active) {
         const _address =
-          sessionsArray[0].namespaces["eip155"].accounts[0].split(":")[2];
+          active.namespaces["eip155"].accounts[0].split(":")[2];
         console.log({ _showAddress, _address });
-        setWeb3WalletSession(sessionsArray[0]);
+        setWeb3WalletSession(active);
         setShowAddress(
           _showAddress && _showAddress.length > 0 ? _showAddress : _address
         );
@@ -273,18 +343,16 @@ function Body() {
         }
         setAddress(_address);
         setUri(
-          `wc:${sessionsArray[0].pairingTopic}@2?relay-protocol=irn&symKey=xxxxxx`
+          `wc:${active.pairingTopic}@2?relay-protocol=irn&symKey=xxxxxx`
         );
-        setWeb3Wallet(_web3wallet);
         setIsConnected(true);
       }
-    } else {
-      setWeb3Wallet(_web3wallet);
-      if (_showAddress) {
-        setShowAddress(_showAddress);
-        setAddress(_showAddress);
-      }
+    } else if (_showAddress) {
+      setShowAddress(_showAddress);
+      setAddress(_showAddress);
     }
+
+    setWeb3Wallet(_web3wallet);
 
     // for debugging
     (window as any).w3 = _web3wallet;
@@ -324,47 +392,65 @@ function Body() {
   };
 
   const initWalletConnect = async () => {
+    if (loading) return; // guard against duplicate clicks during pairing
     setLoading(true);
     const { isValid } = await resolveAndValidateAddress();
 
-    if (isValid) {
-      const { version } = parseUri(uri);
+    if (!isValid) {
+      setLoading(false);
+      return;
+    }
 
-      try {
-        if (version === 1) {
-          toast({
-            title: "Couldn't Connect",
-            description:
-              "The dapp is still using the deprecated WalletConnect V1",
-            status: "error",
-            isClosable: true,
-            duration: 8000,
-          });
-          setLoading(false);
+    const { version } = parseUri(uri);
 
-          // let _legacySignClient = new LegacySignClient({ uri });
+    if (version === 1) {
+      toast({
+        title: "Couldn't Connect",
+        description:
+          "The dapp is still using the deprecated WalletConnect V1",
+        status: "error",
+        isClosable: true,
+        duration: 8000,
+      });
+      setLoading(false);
+      return;
+    }
 
-          // if (!_legacySignClient.connected) {
-          //   await _legacySignClient.createSession();
-          // }
-
-          // setLegacySignClient(_legacySignClient);
-          // setUri(_legacySignClient.uri);
-        } else {
-          await initWeb3Wallet();
-        }
-      } catch (err) {
-        console.error(err);
-        toast({
-          title: "Couldn't Connect",
-          description: "Refresh dApp and Connect again",
-          status: "error",
-          isClosable: true,
-          duration: 2000,
-        });
-        setLoading(false);
+    try {
+      // Reuse the singleton WalletKit. Never call init() a second time —
+      // it would spawn another SignClient on the same Core and double our
+      // relay subscriptions.
+      const _web3wallet = web3wallet ?? (await getWalletKit());
+      if (!web3wallet) {
+        setWeb3Wallet(_web3wallet);
+        (window as any).w3 = _web3wallet;
       }
-    } else {
+
+      // Disconnect any existing session before pairing. Otherwise each
+      // Connect leaves the previous session alive on the relay.
+      if (web3WalletSession) {
+        try {
+          await _web3wallet.disconnectSession({
+            topic: web3WalletSession.topic,
+            reason: getSdkError("USER_DISCONNECTED"),
+          });
+        } catch (e) {
+          console.error("disconnect previous", e);
+        }
+        setWeb3WalletSession(undefined);
+        setIsConnected(false);
+      }
+
+      await _web3wallet.core.pairing.pair({ uri });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Couldn't Connect",
+        description: "Refresh dApp and Connect again",
+        status: "error",
+        isClosable: true,
+        duration: 2000,
+      });
       setLoading(false);
     }
   };
@@ -387,9 +473,7 @@ function Body() {
 
   const onSessionProposal = useCallback(
     async (proposal) => {
-      if (loading) {
-        setLoading(false);
-      }
+      setLoading(false);
       console.log("EVENT", "session_proposal", proposal);
 
       const { requiredNamespaces, optionalNamespaces } = proposal.params;
@@ -433,6 +517,22 @@ function Body() {
         });
       }
 
+      // If a previous session is still around, kill it before approving
+      // the new one so we never have two live sessions on the relay.
+      if (web3wallet) {
+        const existing = Object.values(web3wallet.getActiveSessions());
+        for (const s of existing) {
+          try {
+            await web3wallet.disconnectSession({
+              topic: s.topic,
+              reason: getSdkError("USER_DISCONNECTED"),
+            });
+          } catch (e) {
+            console.error("disconnect existing on proposal", e);
+          }
+        }
+      }
+
       const session = await web3wallet?.approveSession({
         id: proposal.id,
         namespaces: {
@@ -442,7 +542,7 @@ function Body() {
       setWeb3WalletSession(session);
       setIsConnected(true);
     },
-    [web3wallet]
+    [web3wallet, address]
   );
 
   const handleSendTransaction = useCallback(
@@ -554,42 +654,28 @@ function Body() {
     [web3wallet, handleSendTransaction]
   );
 
-  const onSessionDelete = () => {
+  const onSessionDelete = useCallback(() => {
     console.log("EVENT", "session_delete");
 
     reset();
-  };
+  }, []);
 
-  const subscribeToEvents = useCallback(async () => {
-    console.log("ACTION", "subscribeToEvents");
-
-    if (web3wallet) {
-      web3wallet.on("session_proposal", onSessionProposal);
-      try {
-        await web3wallet.core.pairing.pair({ uri });
-      } catch (e) {
-        console.error(e);
-      }
-
-      web3wallet.on("session_request", onSessionRequest);
-
-      web3wallet.on("session_delete", onSessionDelete);
-    }
-  }, [handleSendTransaction, web3wallet]);
-
+  // Subscribe to events when the wallet is ready. Pairing is intentionally
+  // NOT done here — it now lives in `initWalletConnect`, fired only by an
+  // explicit user Connect. Previously, this effect re-paired with the
+  // current URI whenever its callback deps changed (e.g. tenderlyForkId),
+  // creating duplicate relay sessions.
   useEffect(() => {
-    if (web3wallet) {
-      subscribeToEvents();
-    }
+    if (!web3wallet) return;
+    web3wallet.on("session_proposal", onSessionProposal);
+    web3wallet.on("session_request", onSessionRequest);
+    web3wallet.on("session_delete", onSessionDelete);
     return () => {
-      // Clean up event listeners
-      if (web3wallet) {
-        web3wallet.removeListener("session_proposal", onSessionProposal);
-        web3wallet.removeListener("session_request", onSessionRequest);
-        web3wallet.removeListener("session_delete", onSessionDelete);
-      }
+      web3wallet.removeListener("session_proposal", onSessionProposal);
+      web3wallet.removeListener("session_request", onSessionRequest);
+      web3wallet.removeListener("session_delete", onSessionDelete);
     };
-  }, [web3wallet, subscribeToEvents]);
+  }, [web3wallet, onSessionProposal, onSessionRequest, onSessionDelete]);
 
   const updateSession = async ({
     newChainId,

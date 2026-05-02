@@ -1,9 +1,11 @@
+import { ColorModeScript } from "@chakra-ui/react";
 import { Providers } from "@/app/providers";
 import { Analytics } from "@/components/Analytics";
+import theme from "@/style/theme";
 
 export const IndexLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       {/* Farcaster Frame */}
       <head>
         <meta property="fc:frame" content="vNext" />
@@ -21,7 +23,8 @@ export const IndexLayout = ({ children }: { children: React.ReactNode }) => {
         />
         <meta property="fc:frame:button:1" content="🕵️ Start" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
+        <ColorModeScript initialColorMode={theme.config.initialColorMode} />
         <Analytics />
         <Providers>{children}</Providers>
       </body>

@@ -24,6 +24,7 @@ function NetworkInput({
   return (
     <Box mt={4} cursor="pointer">
       <RSelect
+        instanceId="network-input"
         options={[
           {
             label: "",
