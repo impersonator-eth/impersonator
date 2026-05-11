@@ -14,50 +14,53 @@ import {
   walletConnectWallet,
   rainbowWallet,
 } from "@rainbow-me/rainbowkit/wallets";
-import { configureChains, createConfig, WagmiConfig } from "wagmi";
+import { http, createConfig, WagmiProvider } from "wagmi";
 import { mainnet, optimism, base, arbitrum } from "wagmi/chains";
-import { publicProvider } from "wagmi/providers/public";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import theme from "@/style/theme";
 import { SafeInjectProvider } from "@/contexts/SafeInjectContext";
 
-const { chains, publicClient } = configureChains(
-  // the first chain is used by rainbowWallet to determine which chain to use
-  [mainnet, optimism, base, arbitrum],
-  [publicProvider()]
+const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID!;
+
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: "Recommended",
+      wallets: [metaMaskWallet, walletConnectWallet, rainbowWallet],
+    },
+  ],
+  {
+    appName: "Impersonator",
+    projectId,
+  }
 );
 
-const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID!;
-const connectors = connectorsForWallets([
-  {
-    groupName: "Recommended",
-    wallets: [
-      metaMaskWallet({ projectId, chains }),
-      walletConnectWallet({ projectId, chains }),
-      rainbowWallet({ projectId, chains }),
-    ],
-  },
-]);
-
 export const wagmiConfig = createConfig({
-  autoConnect: false,
+  chains: [mainnet, optimism, base, arbitrum],
   connectors,
-  publicClient,
+  transports: {
+    [mainnet.id]: http(),
+    [optimism.id]: http(),
+    [base.id]: http(),
+    [arbitrum.id]: http(),
+  },
+  ssr: true,
 });
+
+const queryClient = new QueryClient();
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <CacheProvider>
       <ChakraProvider theme={theme}>
-        <WagmiConfig config={wagmiConfig}>
-          <RainbowKitProvider
-            chains={chains}
-            theme={darkTheme()}
-            modalSize={"compact"}
-          >
-            <SafeInjectProvider>{children}</SafeInjectProvider>
-          </RainbowKitProvider>
-        </WagmiConfig>
+        <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
+          <QueryClientProvider client={queryClient}>
+            <RainbowKitProvider theme={darkTheme()} modalSize={"compact"}>
+              <SafeInjectProvider>{children}</SafeInjectProvider>
+            </RainbowKitProvider>
+          </QueryClientProvider>
+        </WagmiProvider>
       </ChakraProvider>
     </CacheProvider>
   );
