@@ -521,12 +521,23 @@ function Body() {
         accounts.push(`${chain}:${address}`);
         return null;
       });
+      // Declare every event we actually emit. The sign-client validator
+      // rejects emitSessionEvent calls whose `name` isn't in the approved
+      // namespace's events array ("Missing or invalid. emit() event"), and
+      // dapps frequently omit accountsChanged/chainChanged from
+      // requiredNamespaces.events.
+      const requiredEvents =
+        requiredNamespace === undefined ? [] : requiredNamespace.events;
+      const events = Array.from(
+        new Set([...requiredEvents, "accountsChanged", "chainChanged"])
+      );
+
       const namespace: SessionTypes.Namespace = {
         accounts,
         chains: chains,
         methods:
           requiredNamespace === undefined ? [] : requiredNamespace.methods,
-        events: requiredNamespace === undefined ? [] : requiredNamespace.events,
+        events,
       };
 
       if (requiredNamespace && requiredNamespace.chains) {
