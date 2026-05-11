@@ -44,6 +44,10 @@ function AddressInput({
     onClose: closeAddressBook,
   } = useDisclosure();
 
+  const isUpdateVisible =
+    (selectedTabIndex === 0 && isConnected) ||
+    (selectedTabIndex === 1 && !!appUrl && !isIFrameLoading);
+
   return (
     <FormControl>
       <FormLabel>Enter Address or ENS to Impersonate</FormLabel>
@@ -59,11 +63,16 @@ function AddressInput({
               setAddress(_showAddress);
               setIsAddressValid(true); // remove inValid warning when user types again
             }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && isUpdateVisible && showAddress) {
+                e.preventDefault();
+                updateAddress();
+              }
+            }}
             bg={"brand.lightBlack"}
             isInvalid={!isAddressValid}
           />
-          {(selectedTabIndex === 0 && isConnected) ||
-          (selectedTabIndex === 1 && appUrl && !isIFrameLoading) ? (
+          {isUpdateVisible ? (
             <InputRightElement width="4.5rem" mr="1rem">
               <Button h="1.75rem" size="sm" onClick={updateAddress}>
                 Update
