@@ -32,8 +32,7 @@ import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { faTwitter, faDiscord } from "@fortawesome/free-brands-svg-icons";
-import { useAccount, useNetwork } from "wagmi";
-import { sendTransaction } from "wagmi/actions";
+import { useAccount, useSendTransaction } from "wagmi";
 import { parseEther } from "viem";
 import Confetti from "react-confetti";
 import { CustomConnectButton } from "./CustomConnectButton";
@@ -47,8 +46,9 @@ const Social = ({ icon, link }: { icon: IconProp; link: string }) => {
 };
 
 function Footer() {
-  const { isConnected } = useAccount();
-  const { chain } = useNetwork();
+  const { isConnected, chain } = useAccount();
+  const { sendTransactionAsync } = useSendTransaction();
+  const isUnsupportedChain = isConnected && !chain;
 
   const {
     isOpen: isSupportModalOpen,
@@ -61,8 +61,8 @@ function Footer() {
 
   const handleDonate = async (value: string) => {
     try {
-      await sendTransaction({
-        to: process.env.NEXT_PUBLIC_DONATION_ADDRESS!,
+      await sendTransactionAsync({
+        to: process.env.NEXT_PUBLIC_DONATION_ADDRESS! as `0x${string}`,
         value: parseEther(value),
       });
       launchConfetti();
@@ -158,7 +158,7 @@ function Footer() {
                             <Center>
                               <Button
                                 onClick={() => handleDonate(value)}
-                                isDisabled={!isConnected || chain?.unsupported}
+                                isDisabled={!isConnected || isUnsupportedChain}
                               >
                                 {value} Ξ
                               </Button>
@@ -172,7 +172,7 @@ function Footer() {
                           type="number"
                           placeholder="Custom amount"
                           onChange={(e) => setDonateValue(e.target.value)}
-                          isDisabled={!isConnected || chain?.unsupported}
+                          isDisabled={!isConnected || isUnsupportedChain}
                         />
                         <InputRightElement
                           bg="gray.600"
@@ -189,7 +189,7 @@ function Footer() {
                               handleDonate(donateValue);
                             }
                           }}
-                          isDisabled={!donateValue || chain?.unsupported}
+                          isDisabled={!donateValue || isUnsupportedChain}
                         >
                           Donate
                         </Button>

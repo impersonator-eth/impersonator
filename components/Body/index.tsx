@@ -9,7 +9,14 @@ import { Core } from "@walletconnect/core";
 import { WalletKit, IWalletKit } from "@reown/walletkit";
 import { ProposalTypes, SessionTypes } from "@walletconnect/types";
 import { getSdkError, parseUri } from "@walletconnect/utils";
-import { ethers } from "ethers";
+import {
+  createPublicClient,
+  http,
+  isAddress,
+  type PublicClient,
+} from "viem";
+import { normalize } from "viem/ens";
+import { mainnet } from "viem/chains";
 import axios from "axios";
 import networksList from "evm-rpcs-list";
 import { useSafeInject } from "../../contexts/SafeInjectContext";
@@ -101,7 +108,7 @@ function Body() {
     latestTransaction,
   } = useSafeInject();
 
-  const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider>();
+  const [provider, setProvider] = useState<PublicClient>();
   const [showAddress, setShowAddress] = useState(""); // gets displayed in input. ENS name remains as it is
   const [address, setAddress] = useState(""); // internal resolved address
   const [isAddressValid, setIsAddressValid] = useState(true);
@@ -196,9 +203,14 @@ function Body() {
       : undefined;
     initWeb3Wallet(true, _showAddress);
 
-    const _provider = new ethers.providers.JsonRpcProvider(
-      `https://mainnet.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_KEY}`
-    );
+    const infuraKey = process.env.NEXT_PUBLIC_INFURA_KEY;
+    const rpcUrl = infuraKey
+      ? `https://mainnet.infura.io/v3/${infuraKey}`
+      : "https://ethereum-rpc.publicnode.com";
+    const _provider = createPublicClient({
+      chain: mainnet,
+      transport: http(rpcUrl),
+    });
     setProvider(_provider);
 
     // Defer the iframe boot to a provider-ready effect below. Stash the
@@ -363,14 +375,22 @@ function Body() {
     let _address = address;
     if (!address) {
       isValid = false;
+    } else if (isAddress(address)) {
+      isValid = true;
     } else {
-      // Resolve ENS
-      const resolvedAddress = await provider!.resolveName(address);
+      // Resolve ENS via viem's Universal Resolver (supports CCIP-Read /
+      // ENS v2 names on L2s).
+      let resolvedAddress: `0x${string}` | null = null;
+      try {
+        resolvedAddress = await provider!.getEnsAddress({
+          name: normalize(address),
+        });
+      } catch {
+        resolvedAddress = null;
+      }
       if (resolvedAddress) {
         setAddress(resolvedAddress);
         _address = resolvedAddress;
-        isValid = true;
-      } else if (ethers.utils.isAddress(address)) {
         isValid = true;
       } else {
         isValid = false;
