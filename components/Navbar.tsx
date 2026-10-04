@@ -22,6 +22,7 @@ function Navbar() {
     >
       <Spacer flex="1" />
       <Heading
+        as="h1"
         maxW={["302px", "4xl", "4xl", "4xl"]}
         fontSize={{ base: "2xl", sm: "3xl", md: "4xl" }}
         pr="2rem"

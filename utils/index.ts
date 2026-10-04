@@ -8,6 +8,7 @@ export const getMetadata = (_metadata: {
   const metadata: Metadata = {
     title: _metadata.title,
     description: _metadata.description,
+    alternates: { canonical: "https://www.impersonator.xyz/" },
     twitter: {
       card: "summary_large_image",
       creator: "@apoorvlathey",
@@ -17,6 +18,8 @@ export const getMetadata = (_metadata: {
     },
     openGraph: {
       type: "website",
+      url: "https://www.impersonator.xyz/",
+      siteName: "Impersonator",
       title: _metadata.title,
       description: _metadata.description,
       images: _metadata.images,
